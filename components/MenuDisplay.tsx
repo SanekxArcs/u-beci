@@ -1,13 +1,12 @@
 "use client"
 import { useEffect, useState } from 'react'
 import { fetchDayMenusWithItems } from '@/lib/fetchDayMenus'
-import {  DAY_MENUS_WITH_ITEMS_QUERYResult } from '@/sanity/types';
+import {  DAY_MENUS_WITH_ITEMS_QUERYResult, type Item } from '@/sanity/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogTrigger, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { MoreHorizontal } from 'lucide-react'
 import { MenuDay } from './MenuDay'
-import { Item } from '@/sanity/types'
 
 export function MenuDisplay() {
   const [menus, setMenus] = useState<DAY_MENUS_WITH_ITEMS_QUERYResult | null>(null);
@@ -144,7 +143,23 @@ export function MenuDisplay() {
               <MenuDay
                 date={menuObj.date || ''}
                 description={menuObj.description || ''}
-                menu={(menuObj.menu || []) as Array<Item & { category: { title: string | null } | null }>}
+                menu={menuObj.menu
+                  ? (menuObj.menu.map(item => ({
+                      ...item,
+                      category: item.category ? { title: item.category.title ?? null } : null,
+                      title: item.title ?? '',
+                      slug: item.slug ?? undefined,
+                      mainImage: item.mainImage ?? undefined,
+                      price: item.price ?? undefined,
+                      unit: item.unit ?? undefined,
+                      description: item.description ?? undefined,
+                      ingredients: item.ingredients ?? undefined,
+                      isAvailable: item.isAvailable ?? undefined,
+                      body: item.body ?? undefined,
+                    })) as Array<Item & { category: { title: string | null } | null }>
+                  )
+                  : []
+                }
               />
             ) : <div>Brak menu.</div>}
           </TabsContent>

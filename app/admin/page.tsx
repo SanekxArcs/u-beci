@@ -18,11 +18,7 @@ export default function AdminPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // This is a mock authentication
-    // In a real app, you would validate against a secure backend
     if (username === 'admin' && password === 'password') {
-      // Set a simple auth flag in localStorage
-      // In a real app, use a proper auth solution with JWT/cookies
       localStorage.setItem('isAuthenticated', 'true')
       router.push('/admin/dashboard')
     } else {
@@ -31,7 +27,7 @@ export default function AdminPage() {
   }
   
   return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-280px)] px-4 py-8">
+    <div className="container flex items-center justify-center min-h-[calc(100vh-280px)] px-4 py-8 mx-auto">
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="space-y-1">

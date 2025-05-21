@@ -1,89 +1,112 @@
 "use client"
+import { useEffect, useState } from 'react'
+import { fetchDayMenusWithItems } from '@/lib/fetchDayMenus'
+import {  DAY_MENUS_WITH_ITEMS_QUERYResult } from '@/sanity/types';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
+import { MoreHorizontal } from 'lucide-react'
+import { MenuDay } from './MenuDay'
+import { Item } from '@/sanity/types'
 
-import React, { useState } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MenuItemCard } from '@/components/MenuItemCard'
-import { MenuCategory, MenuItem } from '@/lib/types'
-import { Input } from '@/components/ui/input'
-import { Search } from 'lucide-react'
+export function MenuDisplay() {
+  const [menus, setMenus] = useState<DAY_MENUS_WITH_ITEMS_QUERYResult | null>(null);
+  const [selectedTab, setSelectedTab] = useState<string>('today');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-interface MenuDisplayProps {
-  menuByCategory: Record<MenuCategory, MenuItem[]>;
-}
+  // Helper to parse and compare dates
+  function isToday(dateStr: string) {
+    const today = new Date();
+    const d = new Date(dateStr);
+    return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+  }
 
-// Helper function to get a readable title for the category
-function getCategoryTitle(category: MenuCategory) {
-  const titles: Record<MenuCategory, string> = {
-    breakfast: 'Breakfast',
-    lunch: 'Lunch',
-    dinner: 'Dinner',
-    drinks: 'Drinks',
-    desserts: 'Desserts',
-    starters: 'Starters',
-    mains: 'Main Courses',
-    sides: 'Side Dishes'
-  };
-  
-  return titles[category] || category.charAt(0).toUpperCase() + category.slice(1);
-}
-
-export function MenuDisplay({ menuByCategory }: MenuDisplayProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const categories = Object.keys(menuByCategory) as MenuCategory[];
-  
-  // Filter items based on search query
-  const filteredMenuByCategory = Object.entries(menuByCategory).reduce((acc, [category, items]) => {
-    const filteredItems = items.filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    
-    if (filteredItems.length > 0) {
-      acc[category as MenuCategory] = filteredItems;
+  useEffect(() => {
+    async function fetchData() {
+      const data = await fetchDayMenusWithItems()
+      setMenus(data)
+      console.log('Fetched menus from sanity:', data)
     }
-    
-    return acc;
-  }, {} as Record<MenuCategory, MenuItem[]>);
-  
-  const filteredCategories = Object.keys(filteredMenuByCategory) as MenuCategory[];
-  
-  return (
-    <div id="menu-categories">
-      <div className="max-w-md mx-auto mb-8 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search menu..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-      </div>
+    fetchData()
+  }, [])
 
-      {filteredCategories.length > 0 ? (
-        <Tabs defaultValue={filteredCategories[0]} className="w-full">
-          <TabsList className="mb-8 flex flex-wrap justify-center h-auto">
-            {filteredCategories.map(category => (
-              <TabsTrigger key={category} value={category} className="text-sm px-4 py-2 m-1">
-                {getCategoryTitle(category)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
-          {filteredCategories.map(category => (
-            <TabsContent key={category} value={category} className="mt-0">
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredMenuByCategory[category].map(item => (
-                  <MenuItemCard key={item.id} item={item} />
-                ))}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No menu items found matching your search.</p>
-        </div>
-      )}
-    </div>
+  // Prepare all menus sorted by date ascending
+  const allMenus = (menus ? [...menus] : []).sort((a, b) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return new Date(a.date).getTime() - new Date(b.date).getTime();
+  });
+
+  // Find today's menu id if exists
+  const todayMenuObj = allMenus.find(m => m.date && isToday(m.date));
+  const todayMenuId = todayMenuObj?._id;
+
+  // Prepare tabs: label is 'Dzisiaj' for today, otherwise date
+  const allTabs = allMenus.map(m => ({
+    key: m._id,
+    date: m.date,
+    label: m.date && isToday(m.date)
+      ? 'Dzisiaj'
+      : (m.date ? new Date(m.date).toLocaleDateString('pl-PL', { weekday: 'short', day: '2-digit', month: '2-digit' }) : 'Brak daty'),
+  }));
+
+  // Set default selected tab to today if exists, else first menu
+  useEffect(() => {
+    if (allTabs.length > 0) {
+      if (todayMenuId) setSelectedTab(todayMenuId);
+      else setSelectedTab(allTabs[0].key);
+    }
+  }, [allTabs, todayMenuId]);
+
+  return (
+    <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+      <TabsList>
+        {allTabs.map(tab => (
+          <TabsTrigger
+            key={tab.key}
+            value={tab.key}
+            onClick={() => setSelectedTab(tab.key)}
+          >
+            {tab.label}
+          </TabsTrigger>
+        ))}
+        <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Wszystkie daty"><MoreHorizontal /></Button>
+          </PopoverTrigger>
+          <PopoverContent align="end">
+            <div className="flex flex-col gap-2">
+              {allTabs.map(tab => (
+                <Button
+                  key={tab.key}
+                  variant="ghost"
+                  onClick={() => {
+                    setSelectedTab(tab.key);
+                    setShowDatePicker(false);
+                  }}
+                  aria-pressed={selectedTab === tab.key}
+                >
+                  {tab.label}
+                </Button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </TabsList>
+      {allTabs.map(tab => {
+        const menuObj = allMenus.find(m => m._id === tab.key);
+        return (
+          <TabsContent key={tab.key} value={tab.key}>
+            {menuObj ? (
+              <MenuDay
+                date={menuObj.date || ''}
+                description={menuObj.description || ''}
+                menu={(menuObj.menu || []) as Array<Item & { category: { title: string | null } | null }>}
+              />
+            ) : <div>Brak menu.</div>}
+          </TabsContent>
+        )
+      })}
+    </Tabs>
   )
 }

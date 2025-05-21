@@ -6,6 +6,9 @@ import { SanityLive } from '@/sanity/lib/live'
 import { ThemeProvider } from './../components/theme-provider';
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { sanityFetch } from '../sanity/lib/live'
+import { INFO_QUERY } from '../sanity/lib/queries'
+import { INFO_QUERYResult } from '@/sanity/types'
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const playfair = Playfair_Display({
@@ -18,11 +21,14 @@ export const metadata: Metadata = {
   description: "Tasty home-cooked meals at Bar u Beci",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const infoResult = await sanityFetch({ query: INFO_QUERY });
+  const info: INFO_QUERYResult =
+    infoResult && "data" in infoResult ? infoResult.data : infoResult;
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
@@ -35,9 +41,9 @@ export default function RootLayout({
           enableSystem
           // disableTransitionOnChange
         >
-          <Header />
+          <Header info={info} />
           {children}
-          <Footer />
+          <Footer info={info} />
           <SanityLive />
           <Toaster />
         </ThemeProvider>

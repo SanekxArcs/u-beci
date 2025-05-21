@@ -7,8 +7,11 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Coffee, Menu as MenuIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { INFO_QUERYResult } from "@/sanity/types";
 
-export function Header() {
+
+
+export function Header({info}: {info?: INFO_QUERYResult}) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
 
@@ -19,7 +22,7 @@ export function Header() {
           <Link href="/" className="flex items-center gap-2">
             <Coffee className="h-6 w-6" />
             <span className="font-playfair text-xl font-bold tracking-tight">
-              Bar u Beci
+              {info?.title || "Bar u Beci"}
             </span>
           </Link>
         </div>
@@ -47,13 +50,18 @@ export function Header() {
           </nav>
           <div className="flex items-center gap-2">
             <ModeToggle />
+            {isAdmin && (
+              <>
+                
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/studio">Studio</Link>
+                </Button>
+              </>
+            )}
             {!isAdmin && (
               <>
                 <Button variant="outline" size="sm" asChild>
                   <Link href="/admin">Admin</Link>
-                </Button>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/studio">Studio</Link>
                 </Button>
               </>
             )}
@@ -83,6 +91,13 @@ export function Header() {
                 >
                   About
                 </Link>
+                {isAdmin && (
+                  <>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href="/studio">Studio</Link>
+                    </Button>
+                  </>
+                )}
                 {!isAdmin && (
                   <>
                     <Button variant="outline" size="sm" asChild>

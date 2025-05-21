@@ -68,20 +68,31 @@ export type Geopoint = {
   alt?: number;
 };
 
-export type Post = {
+export type DayMenu = {
   _id: string;
-  _type: "post";
+  _type: "dayMenu";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  date?: string;
+  menu?: Array<{
+    _ref: string;
+    _type: "reference";
+    _weak?: boolean;
+    _key: string;
+    [internalGroqTypeReferenceTo]?: "item";
+  }>;
+  description?: string;
+};
+
+export type Item = {
+  _id: string;
+  _type: "item";
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
   title?: string;
   slug?: Slug;
-  author?: {
-    _ref: string;
-    _type: "reference";
-    _weak?: boolean;
-    [internalGroqTypeReferenceTo]?: "author";
-  };
   mainImage?: {
     asset?: {
       _ref: string;
@@ -95,14 +106,17 @@ export type Post = {
     alt?: string;
     _type: "image";
   };
-  categories?: Array<{
+  price?: number;
+  unit?: "szt" | "gram" | "ml" | "litr" | "kg" | "porcja" | "komplet";
+  category?: {
     _ref: string;
     _type: "reference";
     _weak?: boolean;
-    _key: string;
     [internalGroqTypeReferenceTo]?: "category";
-  }>;
-  publishedAt?: string;
+  };
+  description?: string;
+  ingredients?: Array<string>;
+  isAvailable?: boolean;
   body?: Array<{
     children?: Array<{
       marks?: Array<string>;
@@ -136,44 +150,34 @@ export type Post = {
   }>;
 };
 
-export type Author = {
+export type Info = {
   _id: string;
-  _type: "author";
+  _type: "info";
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  name?: string;
-  slug?: Slug;
-  image?: {
-    asset?: {
-      _ref: string;
-      _type: "reference";
-      _weak?: boolean;
-      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-    };
-    media?: unknown;
-    hotspot?: SanityImageHotspot;
-    crop?: SanityImageCrop;
-    _type: "image";
-  };
-  bio?: Array<{
-    children?: Array<{
-      marks?: Array<string>;
-      text?: string;
-      _type: "span";
-      _key: string;
-    }>;
-    style?: "normal";
-    listItem?: never;
-    markDefs?: Array<{
-      href?: string;
-      _type: "link";
-      _key: string;
-    }>;
-    level?: number;
-    _type: "block";
+  title?: string;
+  description?: string;
+  philosophy?: string;
+  hours?: Array<{
+    day?: "Pn" | "Wt" | "\u015Ar" | "Cz" | "Pt" | "Sb" | "Nd";
+    hours?: string;
     _key: string;
   }>;
+  address?: {
+    street?: string;
+    city?: string;
+    postalCode?: string;
+    url?: string;
+  };
+  phone?: string;
+  socialMedia?: Array<{
+    platform?: "facebook" | "instagram" | "pyszne" | "glovo" | "uber-eats" | "other";
+    url?: string;
+    _key: string;
+  }>;
+  login?: string;
+  password?: string;
 };
 
 export type Category = {
@@ -282,20 +286,193 @@ export type SanityImageMetadata = {
   isOpaque?: boolean;
 };
 
-export type AllSanitySchemaTypes = SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityFileAsset | Geopoint | Post | Author | Category | Slug | BlockContent | SanityImageCrop | SanityImageHotspot | SanityImageAsset | SanityAssetSourceData | SanityImageMetadata;
+export type AllSanitySchemaTypes = SanityImagePaletteSwatch | SanityImagePalette | SanityImageDimensions | SanityFileAsset | Geopoint | DayMenu | Item | Info | Category | Slug | BlockContent | SanityImageCrop | SanityImageHotspot | SanityImageAsset | SanityAssetSourceData | SanityImageMetadata;
 export declare const internalGroqTypeReferenceTo: unique symbol;
 // Source: sanity/lib/queries.ts
 // Variable: POSTS_QUERY
 // Query: *[_type == "post" && defined(slug.current)][0...12]{ _id, title, slug}
-export type POSTS_QUERYResult = Array<{
-  _id: string;
-  title: string | null;
-  slug: Slug | null;
-}>;
+export type POSTS_QUERYResult = Array<never>;
 // Variable: POST_QUERY
 // Query: *[_type == "post" && slug.current == $slug][0]{  title, body, mainImage}
-export type POST_QUERYResult = {
+export type POST_QUERYResult = null;
+// Variable: INFO_QUERY
+// Query: *[_type == "info"][0]{  title,  description,  philosophy,  hours,  address,  phone,  socialMedia,  category}
+export type INFO_QUERYResult = {
   title: string | null;
+  description: string | null;
+  philosophy: string | null;
+  hours: Array<{
+    day?: "Cz" | "Nd" | "Pn" | "Pt" | "Sb" | "\u015Ar" | "Wt";
+    hours?: string;
+    _key: string;
+  }> | null;
+  address: {
+    street?: string;
+    city?: string;
+    postalCode?: string;
+    url?: string;
+  } | null;
+  phone: string | null;
+  socialMedia: Array<{
+    platform?: "facebook" | "glovo" | "instagram" | "other" | "pyszne" | "uber-eats";
+    url?: string;
+    _key: string;
+  }> | null;
+  category: null;
+} | null;
+// Variable: DAY_MENUS_WITH_ITEMS_QUERY
+// Query: *[_type == "dayMenu"]|order(date desc){  _id,  date,  description,  menu[]->{    _id,    title,    description,    ingredients,    unit,    isAvailable,    price,    mainImage,    category->{title},    isAvailable  }}
+export type DAY_MENUS_WITH_ITEMS_QUERYResult = Array<{
+  _id: string;
+  date: string | null;
+  description: string | null;
+  menu: Array<{
+    _id: string;
+    title: string | null;
+    description: string | null;
+    ingredients: Array<string> | null;
+    unit: "gram" | "kg" | "komplet" | "litr" | "ml" | "porcja" | "szt" | null;
+    isAvailable: boolean | null;
+    price: number | null;
+    mainImage: {
+      asset?: {
+        _ref: string;
+        _type: "reference";
+        _weak?: boolean;
+        [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+      };
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      _type: "image";
+    } | null;
+    category: {
+      title: string | null;
+    } | null;
+  }> | null;
+}>;
+// Variable: DAY_MENU_FULL_QUERY
+// Query: *[_type == "dayMenu" && date == $date][0]{  _id,  _type,  _createdAt,  _updatedAt,  _rev,  date,  description,  menu[]->{    _id,    _type,    _createdAt,    _updatedAt,    _rev,    title,    slug,    mainImage,    price,    unit,    category->{_id, title, slug, description},    description,    ingredients,    isAvailable,    body  }}
+export type DAY_MENU_FULL_QUERYResult = {
+  _id: string;
+  _type: "dayMenu";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  date: string | null;
+  description: string | null;
+  menu: Array<{
+    _id: string;
+    _type: "item";
+    _createdAt: string;
+    _updatedAt: string;
+    _rev: string;
+    title: string | null;
+    slug: Slug | null;
+    mainImage: {
+      asset?: {
+        _ref: string;
+        _type: "reference";
+        _weak?: boolean;
+        [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+      };
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      _type: "image";
+    } | null;
+    price: number | null;
+    unit: "gram" | "kg" | "komplet" | "litr" | "ml" | "porcja" | "szt" | null;
+    category: {
+      _id: string;
+      title: string | null;
+      slug: Slug | null;
+      description: string | null;
+    } | null;
+    description: string | null;
+    ingredients: Array<string> | null;
+    isAvailable: boolean | null;
+    body: Array<{
+      children?: Array<{
+        marks?: Array<string>;
+        text?: string;
+        _type: "span";
+        _key: string;
+      }>;
+      style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "normal";
+      listItem?: "bullet";
+      markDefs?: Array<{
+        href?: string;
+        _type: "link";
+        _key: string;
+      }>;
+      level?: number;
+      _type: "block";
+      _key: string;
+    } | {
+      asset?: {
+        _ref: string;
+        _type: "reference";
+        _weak?: boolean;
+        [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+      };
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      _type: "image";
+      _key: string;
+    }> | null;
+  }> | null;
+} | null;
+// Variable: CATEGORY_FULL_QUERY
+// Query: *[_type == "category" && slug.current == $slug][0]{  _id,  _type,  _createdAt,  _updatedAt,  _rev,  title,  slug,  description}
+export type CATEGORY_FULL_QUERYResult = {
+  _id: string;
+  _type: "category";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title: string | null;
+  slug: Slug | null;
+  description: string | null;
+} | null;
+// Variable: ITEM_FULL_QUERY
+// Query: *[_type == "item" && slug.current == $slug][0]{  _id,  _type,  _createdAt,  _updatedAt,  _rev,  title,  slug,  mainImage,  price,  unit,  category->{_id, title, slug, description},  description,  ingredients,  isAvailable,  body}
+export type ITEM_FULL_QUERYResult = {
+  _id: string;
+  _type: "item";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title: string | null;
+  slug: Slug | null;
+  mainImage: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+      _weak?: boolean;
+      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+    };
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+  } | null;
+  price: number | null;
+  unit: "gram" | "kg" | "komplet" | "litr" | "ml" | "porcja" | "szt" | null;
+  category: {
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    description: string | null;
+  } | null;
+  description: string | null;
+  ingredients: Array<string> | null;
+  isAvailable: boolean | null;
   body: Array<{
     children?: Array<{
       marks?: Array<string>;
@@ -327,19 +504,6 @@ export type POST_QUERYResult = {
     _type: "image";
     _key: string;
   }> | null;
-  mainImage: {
-    asset?: {
-      _ref: string;
-      _type: "reference";
-      _weak?: boolean;
-      [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-    };
-    media?: unknown;
-    hotspot?: SanityImageHotspot;
-    crop?: SanityImageCrop;
-    alt?: string;
-    _type: "image";
-  } | null;
 } | null;
 
 // Query TypeMap
@@ -348,5 +512,10 @@ declare module "@sanity/client" {
   interface SanityQueries {
     "*[_type == \"post\" && defined(slug.current)][0...12]{\n _id, title, slug\n}": POSTS_QUERYResult;
     "*[_type == \"post\" && slug.current == $slug][0]{\n  title, body, mainImage\n}": POST_QUERYResult;
+    "*[_type == \"info\"][0]{\n  title,\n  description,\n  philosophy,\n  hours,\n  address,\n  phone,\n  socialMedia,\n  category\n}": INFO_QUERYResult;
+    "*[_type == \"dayMenu\"]|order(date desc){\n  _id,\n  date,\n  description,\n  menu[]->{\n    _id,\n    title,\n    description,\n    ingredients,\n    unit,\n    isAvailable,\n    price,\n    mainImage,\n    category->{title},\n    isAvailable\n  }\n}": DAY_MENUS_WITH_ITEMS_QUERYResult;
+    "*[_type == \"dayMenu\" && date == $date][0]{\n  _id,\n  _type,\n  _createdAt,\n  _updatedAt,\n  _rev,\n  date,\n  description,\n  menu[]->{\n    _id,\n    _type,\n    _createdAt,\n    _updatedAt,\n    _rev,\n    title,\n    slug,\n    mainImage,\n    price,\n    unit,\n    category->{_id, title, slug, description},\n    description,\n    ingredients,\n    isAvailable,\n    body\n  }\n}": DAY_MENU_FULL_QUERYResult;
+    "*[_type == \"category\" && slug.current == $slug][0]{\n  _id,\n  _type,\n  _createdAt,\n  _updatedAt,\n  _rev,\n  title,\n  slug,\n  description\n}": CATEGORY_FULL_QUERYResult;
+    "*[_type == \"item\" && slug.current == $slug][0]{\n  _id,\n  _type,\n  _createdAt,\n  _updatedAt,\n  _rev,\n  title,\n  slug,\n  mainImage,\n  price,\n  unit,\n  category->{_id, title, slug, description},\n  description,\n  ingredients,\n  isAvailable,\n  body\n}": ITEM_FULL_QUERYResult;
   }
 }

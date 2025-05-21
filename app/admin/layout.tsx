@@ -15,10 +15,8 @@ export default function AdminLayout({
   useEffect(() => {
     setIsClient(true)
     
-    // Skip auth check for the login page
     if (pathname === '/admin') return
     
-    // Check if user is authenticated
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
     
     if (!isAuthenticated) {

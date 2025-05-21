@@ -4,6 +4,7 @@ import { defineArrayMember, defineField, defineType } from "sanity";
 export const infoType = defineType({
   name: "info",
   title: "Informacja",
+  description: "Informacja o restauracji",
   type: "document",
   icon: DocumentTextIcon,
   fields: [
@@ -11,20 +12,20 @@ export const infoType = defineType({
       name: "title",
       title: "Tytuł",
       type: "string",
-      validation: (Rule) => Rule.required().min(5).max(100),
+      validation: (Rule) => Rule.required().min(2).max(100),
     }),
     defineField({
       name: "description",
       title: "Opis",
       type: "text",
-      validation: (Rule) => Rule.required().min(10).max(500),
+      validation: (Rule) => Rule.required().min(5).max(500),
     }),
     //Our Philosophy
     defineField({
       name: "philosophy",
       title: "Nasza filozofia",
       type: "text",
-      validation: (Rule) => Rule.required().min(10).max(500),
+      validation: (Rule) => Rule.required().min(5).max(500),
     }),
 
     defineField({
@@ -41,13 +42,13 @@ export const infoType = defineType({
               type: "string",
               options: {
                 list: [
-                  { title: "Poniedziałek", value: "monday" },
-                  { title: "Wtorek", value: "tuesday" },
-                  { title: "Środa", value: "wednesday" },
-                  { title: "Czwartek", value: "thursday" },
-                  { title: "Piątek", value: "friday" },
-                  { title: "Sobota", value: "saturday" },
-                  { title: "Niedziela", value: "sunday" },
+                  { title: "Poniedziałek", value: "Pn" },
+                  { title: "Wtorek", value: "Wt" },
+                  { title: "Środa", value: "Śr" },
+                  { title: "Czwartek", value: "Cz" },
+                  { title: "Piątek", value: "Pt" },
+                  { title: "Sobota", value: "Sb" },
+                  { title: "Niedziela", value: "Nd" },
                 ],
               },
             },
@@ -60,7 +61,6 @@ export const infoType = defineType({
         }),
       ],
     }),
-    // address with title and url
     defineField({
       name: "address",
       title: "Adres",
@@ -89,14 +89,12 @@ export const infoType = defineType({
         },
       ],
     }),
-    // phone number with title
     defineField({
       name: "phone",
       title: "Numer telefonu",
       type: "string",
       validation: (Rule) => Rule.required().min(7).max(15),
     }),
-    //social media links facebook and other links array
     defineField({
       name: "socialMedia",
       title: "Linki do mediów społecznościowych",
@@ -131,10 +129,22 @@ export const infoType = defineType({
       ],
     }),
     defineField({
-      name: "category",
-      title: "Kategoria",
+      name: "login",
+      title: "Login",
       type: "string",
-      validation: (Rule) => Rule.required().min(2).max(50),
+      validation: (Rule) => Rule.required().min(5).max(20),
+    }),
+    defineField({
+      name: "password",
+      title: "Hasło",
+      type: "string",
+      validation: (Rule) => Rule.required().min(8).max(20),
     }),
   ],
+  preview: {
+    select: {
+      title: "title",
+      subtitle: "description",
+    },
+  },
 });

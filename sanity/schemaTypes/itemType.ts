@@ -3,7 +3,8 @@ import { defineArrayMember, defineField, defineType } from "sanity";
 
 export const itemType = defineType({
   name: "item",
-  title: "Item",
+  title: "Potrawa",
+  description: "Potrawa, która będzie wyświetlana w menu",
   type: "document",
   icon: DocumentTextIcon,
   fields: [
@@ -40,6 +41,23 @@ export const itemType = defineType({
       title: "Cena",
       type: "number",
     }),
+    // units
+    defineField({
+      name: "unit",
+      title: "Jednostka",
+      type: "string",
+      options: {
+        list: [
+          { title: "szt", value: "szt" },
+          { title: "gram", value: "gram" },
+          { title: "ml", value: "ml" },
+          { title: "litr", value: "litr" },
+          { title: "kg", value: "kg" },
+          { title: "porcja", value: "porcja" },
+          { title: "komplet", value: "komplet" },
+        ],
+      },
+    }),
     defineField({
       name: "category",
       title: "Kategoria",
@@ -61,10 +79,33 @@ export const itemType = defineType({
         }),
       ],
     }),
+    // available
+    defineField({
+      name: "isAvailable",
+      title: "Dostępny",
+      type: "boolean",
+      initialValue: true,
+    }),
     defineField({
       name: "body",
       title: "Treść",
       type: "blockContent",
     }),
   ],
+  // preview title price description
+  preview: {
+    select: {
+      title: "title",
+      media: "mainImage",
+      price: "price",
+      description: "description",
+    },
+    prepare({ title, media, price, description,  }) {
+      return {
+        title,
+        media,
+        subtitle: `${price} zł - ${description || ""}`,
+      };
+    },
+  },
 });

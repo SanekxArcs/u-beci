@@ -4,17 +4,13 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { PlusCircle, Pencil, Trash2, Search } from 'lucide-react'
+import {  Pencil, Trash2, Search } from 'lucide-react'
 import { toast } from "sonner"
 import { Item } from '@/sanity/types'
 import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
 import { createMenuItem, updateMenuItem, deleteMenuItem } from '@/lib/menuItemMutations'
 import { fetchAllCategories } from '@/lib/fetchCategories'
+import { MenuItemDialogForm } from './MenuItemDialogForm'
 
 // Helper for category reference
 const getCategoryRef = (id: string) => ({ _type: "reference" as const, _ref: id })
@@ -56,7 +52,7 @@ export function AdminMenuItems() {
           description: item.description ?? '',
           ingredients: item.ingredients ?? [],
           isAvailable: item.isAvailable ?? true,
-          // mainImage removed
+
         }) as Item)
       )
     })
@@ -68,21 +64,38 @@ export function AdminMenuItems() {
     (item.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // Remove image file handlers
-
-  const handleAddItem = async () => {
-    if (!newItem.title || !newItem.categoryId) return
+  const handleAddItem = async (docOverride?: any) => {
+    const doc = docOverride || newItem;
+    const {
+      title,
+      slug,
+      price,
+      unit,
+      description,
+      ingredients,
+      isAvailable,
+      body,
+      categoryId,
+      ...rest
+    } = doc;
     const itemToCreate: Omit<Item, '_id' | '_createdAt' | '_updatedAt' | '_rev'> = {
-      ...newItem,
-      _type: 'item',
-      category: getCategoryRef(newItem.categoryId),
-    }
-    const created = await createMenuItem(itemToCreate)
-    setMenuItems([created, ...menuItems])
-    setNewItem({ title: '', description: '', price: 0, categoryId: '', isAvailable: true, unit: undefined, ingredients: [] })
-    setIsAddingItem(false)
-    toast.success('Menu item added successfully')
-  }
+      title,
+      slug: { current: slug || (title ? title.toLowerCase().replace(/\s+/g, '-') : '') },
+      price,
+      unit,
+      description,
+      ingredients,
+      isAvailable,
+      body: Array.isArray(body) ? body : (body ? [{ _type: 'block', children: [{ _type: 'span', text: body }] }] : undefined),
+      category: categoryId ? { _type: 'reference', _ref: categoryId } : undefined,
+      ...rest
+    };
+    const created = await createMenuItem(itemToCreate);
+    setMenuItems([created, ...menuItems]);
+    setNewItem({ title: '', description: '', price: 0, categoryId: '', isAvailable: true, unit: undefined, ingredients: [] });
+    setIsAddingItem(false);
+    toast.success('Menu item added successfully');
+  };
 
   const handleEditOpen = (item: Item) => {
     setEditingItem(item)
@@ -92,23 +105,46 @@ export function AdminMenuItems() {
     })
   }
 
-  const handleUpdateItem = async () => {
-    if (!editingItem || !editForm.title || !editForm.categoryId) return
+  const handleUpdateItem = async (docOverride?: any) => {
+    if (!editingItem || !editForm.title || !editForm.categoryId) return;
+    const doc = docOverride || editForm;
+    const {
+      title,
+      slug,
+      price,
+      unit,
+      description,
+      ingredients,
+      isAvailable,
+      body,
+      categoryId,
+      ...rest
+    } = doc;
     const updates: Partial<Item> = {
-      ...editForm,
-      category: getCategoryRef(editForm.categoryId),
-    }
-    const updated = await updateMenuItem(editingItem._id, updates)
-    setMenuItems(menuItems.map(item => item._id === updated._id ? updated : item))
-    setEditingItem(null)
-    toast.success('Menu item updated successfully')
-  }
+      title,
+      slug: { current: slug || (title ? title.toLowerCase().replace(/\s+/g, '-') : '') },
+      price,
+      unit,
+      description,
+      ingredients,
+      isAvailable,
+      body: Array.isArray(body) ? body : (body ? [{ _type: 'block', children: [{ _type: 'span', text: body }] }] : undefined),
+      category: categoryId ? { _type: 'reference', _ref: categoryId } : undefined,
+      ...rest
+    };
+    const updated = await updateMenuItem(editingItem._id, updates);
+    setMenuItems(menuItems.map(item => item._id === updated._id ? updated : item));
+    setEditingItem(null);
+    toast.success('Menu item updated successfully');
+  };
 
   const handleDeleteItem = async (_id: string) => {
     await deleteMenuItem(_id)
     setMenuItems(menuItems.filter(item => item._id !== _id))
     toast.success('Menu item deleted successfully')
   }
+  console.log('Menu items:', menuItems)
+  console.log('Categories:', categories)
 
   return (
     <div>
@@ -122,103 +158,18 @@ export function AdminMenuItems() {
             className="pl-10"
           />
         </div>
-        <Dialog open={isAddingItem} onOpenChange={setIsAddingItem}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Dodaj nową pozycję
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Dodaj nową pozycję do menu</DialogTitle>
-              <DialogDescription>
-                Uzupełnij dane nowej pozycji w menu.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Nazwa
-                </Label>
-                <Input
-                  id="name"
-                  value={newItem.title}
-                  onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="description" className="text-right">
-                  Opis
-                </Label>
-                <Textarea
-                  id="description"
-                  value={newItem.description}
-                  onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="price" className="text-right">
-                  Cena
-                </Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={isNaN(Number(newItem.price)) ? '' : String(newItem.price)}
-                  onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) })}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="category" className="text-right">
-                  Kategoria
-                </Label>
-                <Select
-                  value={newItem.categoryId}
-                  onValueChange={(value) => setNewItem({ ...newItem, categoryId: value })}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map(category => (
-                      <SelectItem key={category._id} value={category._id}>
-                        {category.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              {/* Removed image upload UI */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="isSpecial" className="text-right">
-                  Dostępność
-                </Label>
-                <div className="flex items-center space-x-2 col-span-3">
-                  <Switch
-                    id="isSpecial"
-                    checked={newItem.isAvailable || false}
-                    onCheckedChange={(checked) => setNewItem({ ...newItem, isAvailable: checked })}
-                  />
-                  <Label htmlFor="isSpecial">
-                    Dostępne?
-                  </Label>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddingItem(false)}>
-                Anuluj
-              </Button>
-              <Button onClick={handleAddItem}>
-                Dodaj pozycję
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button className="w-full md:w-auto" onClick={() => setIsAddingItem(true)}>
+          Dodaj nową pozycję
+        </Button>
+        <MenuItemDialogForm
+          open={isAddingItem}
+          onOpenChange={setIsAddingItem}
+          item={newItem}
+          setItem={setNewItem}
+          categories={categories}
+          onSubmit={handleAddItem}
+          isEdit={false}
+        />
       </div>
 
       <div className="space-y-4">
@@ -244,105 +195,23 @@ export function AdminMenuItems() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 self-end md:self-center">
-                  <Dialog open={editingItem?._id === item._id} onOpenChange={(open) => !open && setEditingItem(null)}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="icon" onClick={() => handleEditOpen(item)}>
-                        <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Edit</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
-                      <DialogHeader>
-                        <DialogTitle>Edytuj pozycję w menu</DialogTitle>
-                        <DialogDescription>
-                          Wprowadź zmiany w pozycji menu.
-                        </DialogDescription>
-                      </DialogHeader>
-                      {editingItem && (
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="edit-name" className="text-right">
-                              Nazwa
-                            </Label>
-                            <Input
-                              id="edit-name"
-                              value={editForm.title}
-                              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                              className="col-span-3"
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="edit-description" className="text-right">
-                              Opis
-                            </Label>
-                            <Textarea
-                              id="edit-description"
-                              value={editForm.description}
-                              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                              className="col-span-3"
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="edit-price" className="text-right">
-                              Cena
-                            </Label>
-                            <Input
-                              id="edit-price"
-                              type="number"
-                              step="0.01"
-                              value={isNaN(Number(editForm.price)) ? '' : String(editForm.price)}
-                              onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) })}
-                              className="col-span-3"
-                            />
-                          </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="edit-category" className="text-right">
-                              Kategoria
-                            </Label>
-                            <Select
-                              value={editForm.categoryId}
-                              onValueChange={(value) => setEditForm({ ...editForm, categoryId: value })}
-                            >
-                              <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {categories.map(category => (
-                                  <SelectItem key={category._id} value={category._id}>
-                                    {category.title}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          {/* Removed image upload UI */}
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="edit-isSpecial" className="text-right">
-                              Dostępność
-                            </Label>
-                            <div className="flex items-center space-x-2 col-span-3">
-                              <Switch
-                                id="edit-isSpecial"
-                                checked={editForm.isAvailable || false}
-                                onCheckedChange={(checked) => setEditForm({ ...editForm, isAvailable: checked })}
-                              />
-                              <Label htmlFor="edit-isSpecial">
-                                Dostępne dzisiaj
-                              </Label>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditingItem(null)}>
-                          Anuluj
-                        </Button>
-                        <Button onClick={handleUpdateItem}>
-                          Zapisz zmiany
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                  <MenuItemDialogForm
+                    open={editingItem?._id === item._id}
+                    onOpenChange={(open) => !open && setEditingItem(null)}
+                    item={editForm}
+                    setItem={setEditForm}
+                    categories={categories}
+                    onSubmit={handleUpdateItem}
+                    isEdit={true}
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => handleEditOpen(item)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    <span className="sr-only">Edit</span>
+                  </Button>
                   <Button 
                     variant="outline" 
                     size="icon" 

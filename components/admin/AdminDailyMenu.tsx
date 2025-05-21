@@ -1,202 +1,239 @@
 "use client"
 
-import React, { useState } from 'react'
-import { dailyMenus as initialDailyMenus, menuItems } from '@/lib/data'
-import { DailyMenu, MenuItem } from '@/lib/types'
+import React, { useState, useEffect } from 'react'
+import { fetchDayMenusWithItems } from '@/lib/fetchDayMenus'
+import { DAY_MENUS_WITH_ITEMS_QUERYResult } from '@/sanity/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar } from '@/components/ui/calendar'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { format } from 'date-fns'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { format } from 'date-fns'
-import { CalendarIcon, PlusCircle, Pencil, Trash2 } from 'lucide-react'
-import { toast } from "sonner"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { CalendarIcon, PlusCircle, Pencil, Trash2, Copy } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
+import { ALL_MENU_ITEMS_QUERYResult } from '@/sanity/types'
+import { createDayMenu, updateDayMenu, deleteDayMenu } from '@/lib/dayMenuMutations'
 
 export function AdminDailyMenu() {
-  const [dailyMenus, setDailyMenus] = useState<DailyMenu[]>(initialDailyMenus)
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [dailyMenus, setDailyMenus] = useState<DAY_MENUS_WITH_ITEMS_QUERYResult>([])
+  const [allMenuItems, setAllMenuItems] = useState<ALL_MENU_ITEMS_QUERYResult>([])
+  const [loading, setLoading] = useState(true)
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingMenu, setEditingMenu] = useState<any | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
-  const [editing, setEditing] = useState<boolean>(false)
-  const [editingMenuIndex, setEditingMenuIndex] = useState<number | null>(null)
-  
-  const handleDailyMenuSave = () => {
-    if (!selectedDate) return
-    
-    const dateStr = selectedDate.toISOString().split('T')[0] + 'T00:00:00.000Z'
-    
-    if (editing && editingMenuIndex !== null) {
-      // Update existing menu
-      const updatedMenus = [...dailyMenus]
-      updatedMenus[editingMenuIndex] = {
-        date: dateStr,
-        menuItems: selectedItems
-      }
-      setDailyMenus(updatedMenus)
-      toast.success("Daily menu updated successfully")
-    } else {
-      // Add new menu
-      const newMenu: DailyMenu = {
-        date: dateStr,
-        menuItems: selectedItems
-      }
-      setDailyMenus([...dailyMenus, newMenu])
-      toast.success("Daily menu created successfully")
+  const [description, setDescription] = useState<string>('')
+  const [isCopy, setIsCopy] = useState(false)
+  const [hidePast, setHidePast] = useState(true)
+  const [sortAsc, setSortAsc] = useState(true)
+
+  useEffect(() => {
+    async function fetchMenus() {
+      setLoading(true)
+      const [menus, items] = await Promise.all([
+        fetchDayMenusWithItems(),
+        fetchAllMenuItems()
+      ])
+      setDailyMenus(menus)
+      setAllMenuItems(items)
+      setLoading(false)
     }
-    
-    resetForm()
+    fetchMenus()
+  }, [])
+
+  // Add this function to reload menus and items
+  const handleRefresh = async () => {
+    setLoading(true)
+    const [menus, items] = await Promise.all([
+      fetchDayMenusWithItems(),
+      fetchAllMenuItems()
+    ])
+    setDailyMenus(menus)
+    setAllMenuItems(items)
+    setLoading(false)
   }
-  
-  const handleEditMenu = (index: number) => {
-    const menu = dailyMenus[index]
-    setSelectedDate(new Date(menu.date))
-    setSelectedItems(menu.menuItems)
-    setEditing(true)
-    setEditingMenuIndex(index)
+
+  // Helper to determine if a menu is in the past
+  const isPast = (dateStr: string | null | undefined) => {
+    if (!dateStr) return false
+    const menuDate = new Date(dateStr)
+    const today = new Date()
+    today.setHours(0,0,0,0)
+    menuDate.setHours(0,0,0,0)
+    return menuDate < today
   }
-  
-  const handleDeleteMenu = (index: number) => {
-    const updatedMenus = dailyMenus.filter((_, i) => i !== index)
-    setDailyMenus(updatedMenus)
-    toast.success("Daily menu deleted successfully")
+
+  // Sort and filter menus
+  let filteredMenus = dailyMenus.slice()
+  if (hidePast) {
+    filteredMenus = filteredMenus.filter(menu => !isPast(menu.date))
   }
-  
-  const handleItemToggle = (itemId: string) => {
-    if (selectedItems.includes(itemId)) {
-      setSelectedItems(selectedItems.filter(id => id !== itemId))
+  filteredMenus.sort((a, b) => {
+    if (!a.date) return 1
+    if (!b.date) return -1
+    return sortAsc
+      ? new Date(a.date).getTime() - new Date(b.date).getTime()
+      : new Date(b.date).getTime() - new Date(a.date).getTime()
+  })
+
+  // Open dialog for add/edit/copy
+  const openDialog = (menu?: any, copyMode = false) => {
+    setEditingMenu(menu || null)
+    setIsCopy(copyMode)
+    setDialogOpen(true)
+    if (menu) {
+      setSelectedDate(copyMode ? undefined : (menu.date ? new Date(menu.date) : undefined))
+      setSelectedItems(menu.menu ? menu.menu.map((item: any) => item._id) : [])
+      setDescription(menu.description || '')
     } else {
-      setSelectedItems([...selectedItems, itemId])
+      setSelectedDate(undefined)
+      setSelectedItems([])
+      setDescription('')
     }
   }
-  
-  const resetForm = () => {
-    setSelectedDate(new Date())
+  const closeDialog = () => {
+    setDialogOpen(false)
+    setEditingMenu(null)
+    setSelectedDate(undefined)
     setSelectedItems([])
-    setEditing(false)
-    setEditingMenuIndex(null)
+    setDescription('')
+    setIsCopy(false)
   }
-  
-  const getMenuItemsForDate = (date: string): MenuItem[] => {
-    const menu = dailyMenus.find(menu => menu.date.startsWith(date.split('T')[0]))
-    if (!menu) return []
-    
-    return menuItems.filter(item => menu.menuItems.includes(item.id))
+
+  // Local add/edit/delete/copy logic (replace with Sanity mutations in future)
+  const handleSave = async () => {
+    if (!selectedDate || selectedItems.length === 0) return
+    const dateStr = selectedDate.toISOString().split('T')[0]
+    if (editingMenu && !isCopy) {
+      // Edit existing in Sanity
+      await updateDayMenu(editingMenu._id, {
+        date: dateStr,
+        menu: selectedItems,
+        description,
+      })
+    } else {
+      // Add new or copy in Sanity
+      await createDayMenu({
+        date: dateStr,
+        menu: selectedItems,
+        description,
+      })
+    }
+    // Always refresh menus from Sanity after add, edit, or copy
+    setLoading(true)
+    const menus = await fetchDayMenusWithItems()
+    setDailyMenus(menus)
+    setLoading(false)
+    closeDialog()
   }
-  
+  const handleDelete = async (menuId: string) => {
+    await deleteDayMenu(menuId)
+    setLoading(true)
+    const [menus, items] = await Promise.all([
+      fetchDayMenusWithItems(),
+      fetchAllMenuItems()
+    ])
+    setDailyMenus(menus)
+    setAllMenuItems(items)
+    setLoading(false)
+  }
+
+  if (loading) {
+    return <div>Loading daily menus...</div>
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold">Daily Menus</h2>
-        <Dialog onOpenChange={(open) => !open && resetForm()}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Create Daily Menu
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>{editing ? "Edit Daily Menu" : "Create New Daily Menu"}</DialogTitle>
-              <DialogDescription>
-                {editing 
-                  ? "Update the date and menu items for this daily menu." 
-                  : "Select a date and choose menu items to feature that day."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-4">
-              <div className="space-y-2">
-                <Label>Select Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Select Menu Items</Label>
-                <div className="border rounded-md p-4 h-[300px] overflow-y-auto space-y-4">
-                  {menuItems.map(item => (
-                    <div key={item.id} className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`item-${item.id}`} 
-                        checked={selectedItems.includes(item.id)}
-                        onCheckedChange={() => handleItemToggle(item.id)}
-                      />
-                      <Label htmlFor={`item-${item.id}`} className="flex-grow cursor-pointer">
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-xs text-muted-foreground">{item.category} - ${item.price.toFixed(2)}</div>
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {selectedItems.length} item{selectedItems.length !== 1 && 's'} selected
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={resetForm}>
-                Cancel
-              </Button>
-              <Button onClick={handleDailyMenuSave}>
-                {editing ? "Update Menu" : "Create Menu"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button onClick={handleRefresh} variant="outline">
+            Refresh
+          </Button>
+          <Button onClick={() => setHidePast(h => !h)} variant="outline">
+            {hidePast ? 'Show Past' : 'Hide Past'}
+          </Button>
+          <Button onClick={() => setSortAsc(s => !s)} variant="outline">
+            Sort by Date {sortAsc ? '▲' : '▼'}
+          </Button>
+          <Button onClick={() => openDialog()}>
+            <PlusCircle className="h-4 w-4 mr-2" /> Add Daily Menu
+          </Button>
+        </div>
       </div>
-      
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{editingMenu ? (isCopy ? 'Copy Daily Menu' : 'Edit Daily Menu') : 'Create New Daily Menu'}</DialogTitle>
+            <DialogDescription>
+              {editingMenu ? (isCopy ? 'Select a new date and copy menu items.' : 'Update the date, menu items, and description for this daily menu.') : 'Select a date, choose menu items, and add a description for that day.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="space-y-2">
+              <Label>Select Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant={"outline"} className="w-full justify-start text-left font-normal">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <input type="date" className="border rounded p-2" value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''} onChange={e => setSelectedDate(e.target.value ? new Date(e.target.value) : undefined)} />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label>Select Menu Items</Label>
+              <div className="border rounded-md p-4 h-[300px] overflow-y-auto space-y-4">
+                {allMenuItems.map(item => (
+                  <div key={item._id} className="flex items-center space-x-2">
+                    <Checkbox id={`item-${item._id}`} checked={selectedItems.includes(item._id)} onCheckedChange={() => setSelectedItems(selectedItems.includes(item._id) ? selectedItems.filter(id => id !== item._id) : [...selectedItems, item._id])} />
+                    <Label htmlFor={`item-${item._id}`} className="flex-grow cursor-pointer">
+                      <div className="font-medium">{item.title}</div>
+                      <div className="text-xs text-muted-foreground">{item.category?.title || ''} - ₤{item.price != null ? item.price.toFixed(2) : ''}</div>
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">{selectedItems.length} item{selectedItems.length !== 1 && 's'} selected</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <textarea className="border rounded-md p-2 w-full min-h-[60px]" value={description} onChange={e => setDescription(e.target.value)} placeholder="Opis (optional)" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
+            <Button onClick={handleSave}>{editingMenu && !isCopy ? 'Update Menu' : 'Save Menu'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="space-y-6">
-        {dailyMenus.length > 0 ? (
-          dailyMenus.map((menu, index) => {
-            const menuDate = new Date(menu.date);
-            const menuItems = getMenuItemsForDate(menu.date);
-            
+        {filteredMenus.length > 0 ? (
+          filteredMenus.map(menu => {
+            const menuDate = menu.date ? new Date(menu.date) : null;
+            const menuItems = menu.menu || [];
             return (
-              <Card key={index}>
+              <Card key={menu._id}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-lg font-medium">
-                    {format(menuDate, "PPPP")}
+                    {menuDate ? format(menuDate, "PPPP") : 'No date'}
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={() => handleEditMenu(index)}>
+                    <Button variant="outline" size="icon" onClick={() => openDialog(menu, false)}>
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Edit</span>
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      onClick={() => handleDeleteMenu(index)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
+                    <Button variant="outline" size="icon" onClick={() => openDialog(menu, true)}>
+                      <Copy className="h-4 w-4" />
+                      <span className="sr-only">Copy</span>
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => handleDelete(menu._id)} className="text-destructive hover:text-destructive hover:bg-destructive/10">
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Delete</span>
                     </Button>
@@ -213,11 +250,11 @@ export function AdminDailyMenu() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {menuItems.map(item => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell>{item.category}</TableCell>
-                            <TableCell className="text-right">${item.price.toFixed(2)}</TableCell>
+                        {menuItems.map((item: any, idx: number) => (
+                          <TableRow key={item._id + '-' + idx}>
+                            <TableCell className="font-medium">{item.title}</TableCell>
+                            <TableCell>{item.category?.title || ''}</TableCell>
+                            <TableCell className="text-right">{item.price != null ? `₤${item.price.toFixed(2)}` : ''}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

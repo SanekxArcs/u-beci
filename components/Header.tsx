@@ -5,15 +5,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
-import { Coffee, Menu as MenuIcon } from "lucide-react";
+import { Coffee, LogOut, Menu as MenuIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { INFO_QUERYResult } from "@/sanity/types";
+import { useRouter } from "next/navigation";
 
-
-
-export function Header({info}: {info?: INFO_QUERYResult}) {
+export function Header({ info }: { info?: INFO_QUERYResult }) {
+  const router = useRouter();
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
+  const handleLogout = () => {
+    localStorage.removeItem("isAuthenticated");
+    router.push("/admin");
+  };
 
   return (
     <header className=" border-b sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -39,8 +43,19 @@ export function Header({info}: {info?: INFO_QUERYResult}) {
                 Menu
               </Link>
             </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                href="/admin/dashboard"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  pathname === "/admin/dashboard"
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                Dashboard
+              </Link>
+            </Button>
             <div className="flex items-center gap-2">
-              
               {isAdmin && (
                 <>
                   <Button variant="outline" size="sm" asChild>
@@ -54,6 +69,16 @@ export function Header({info}: {info?: INFO_QUERYResult}) {
                     <Link href="/admin">Admin</Link>
                   </Button>
                 </>
+              )}
+              {pathname === "/admin/dashboard" && (
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  className="mt-4 md:mt-0"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
               )}
               <ModeToggle />
             </div>

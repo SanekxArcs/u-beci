@@ -1,19 +1,16 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
 import { fetchDayMenusWithItems } from '@/lib/fetchDayMenus'
 import { ALL_MENU_ITEMS_QUERYResult, DAY_MENUS_WITH_ITEMS_QUERYResult } from '@/sanity/types'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AdminMenuItems } from '@/components/admin/AdminMenuItems'
 import { AdminDailyMenu } from '@/components/admin/AdminDailyMenu'
-import { LogOut, PlusCircle, FileText, CalendarDays } from 'lucide-react'
+import {  PlusCircle, FileText, CalendarDays } from 'lucide-react'
 
 export default function AdminDashboardPage() {
-  const router = useRouter()
   const [menuItems, setMenuItems] = useState<ALL_MENU_ITEMS_QUERYResult>([]);
   const [dailyMenus, setDailyMenus] = useState<DAY_MENUS_WITH_ITEMS_QUERYResult>([]);
   const [loading, setLoading] = useState(true)
@@ -35,10 +32,6 @@ export default function AdminDashboardPage() {
   const availableCount = menuItems.filter(i => i.isAvailable).length
   const unavailableCount = menuItems.filter(i => i.isAvailable === false).length
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated')
-    router.push('/admin')
-  }
 
   if (loading) {
     return <div className="container px-4 py-8 md:px-6 md:py-12 mx-auto">Loading...</div>
@@ -53,14 +46,6 @@ export default function AdminDashboardPage() {
             Manage your menu and daily specials.
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleLogout}
-          className="mt-4 md:mt-0"
-        >
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
-        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">

@@ -28,44 +28,36 @@ export function Header({info}: {info?: INFO_QUERYResult}) {
         </div>
 
         <div className="hidden md:flex items-center gap-6">
-          <nav className="flex gap-6">
-            <Link
-              href="/"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                pathname === "/" ? "text-foreground" : "text-muted-foreground"
-              }`}
-            >
-              Menu
-            </Link>
-            <Link
-              href="/about"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                pathname === "/about"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              }`}
-            >
-              About
-            </Link>
+          <nav className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                href="/"
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  pathname === "/" ? "text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                Menu
+              </Link>
+            </Button>
+            <div className="flex items-center gap-2">
+              
+              {isAdmin && (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/studio">Studio</Link>
+                  </Button>
+                </>
+              )}
+              {!isAdmin && (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/admin">Admin</Link>
+                  </Button>
+                </>
+              )}
+              <ModeToggle />
+            </div>
           </nav>
-          <div className="flex items-center gap-2">
-            <ModeToggle />
-            {isAdmin && (
-              <>
-                
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/studio">Studio</Link>
-                </Button>
-              </>
-            )}
-            {!isAdmin && (
-              <>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/admin">Admin</Link>
-                </Button>
-              </>
-            )}
-          </div>
         </div>
 
         <div className="md:hidden flex items-center gap-2">

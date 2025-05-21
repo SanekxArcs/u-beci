@@ -1,8 +1,10 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { menuItems, dailyMenus } from '@/lib/data'
+import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
+import { fetchDayMenusWithItems } from '@/lib/fetchDayMenus'
+import { Item, DAY_MENUS_WITH_ITEMS_QUERYResult } from '@/sanity/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -12,12 +14,36 @@ import { LogOut, PlusCircle, FileText, CalendarDays } from 'lucide-react'
 
 export default function AdminDashboardPage() {
   const router = useRouter()
-  
+  const [menuItems, setMenuItems] = useState<Item[]>([])
+  const [dailyMenus, setDailyMenus] = useState<DAY_MENUS_WITH_ITEMS_QUERYResult>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true)
+      const [items, daily] = await Promise.all([
+        fetchAllMenuItems(),
+        fetchDayMenusWithItems()
+      ])
+      setMenuItems(items)
+      setDailyMenus(daily)
+      setLoading(false)
+    }
+    fetchData()
+  }, [])
+
+  const availableCount = menuItems.filter(i => i.isAvailable).length
+  const unavailableCount = menuItems.filter(i => i.isAvailable === false).length
+
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated')
     router.push('/admin')
   }
-  
+
+  if (loading) {
+    return <div className="container px-4 py-8 md:px-6 md:py-12 mx-auto">Loading...</div>
+  }
+
   return (
     <div className="container px-4 py-8 md:px-6 md:py-12 mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
@@ -37,7 +63,7 @@ export default function AdminDashboardPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
@@ -53,20 +79,6 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Today&apos;s Specials
-            </CardTitle>
-            <PlusCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {menuItems.filter((item) => item.isSpecial).length}
-            </div>
-            <p className="text-xs text-muted-foreground">special items today</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
               Planned Daily Menus
             </CardTitle>
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
@@ -76,6 +88,30 @@ export default function AdminDashboardPage() {
             <p className="text-xs text-muted-foreground">
               different daily menus
             </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
+              Available Items
+            </CardTitle>
+            <PlusCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{availableCount}</div>
+            <p className="text-xs text-muted-foreground">available now</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
+              Unavailable Items
+            </CardTitle>
+            <PlusCircle className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{unavailableCount}</div>
+            <p className="text-xs text-muted-foreground">not available</p>
           </CardContent>
         </Card>
       </div>

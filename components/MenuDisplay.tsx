@@ -99,7 +99,7 @@ export function MenuDisplay() {
       setSelectedTab(todayMenuObj._id);
       setCustomTab(null);
     }
-  }, [todayMenuObj]);
+  }, [todayMenuObj, selectedTab]);
 
   console.log('selectedTab', selectedTab, 'visibleTabs', visibleTabs);
 

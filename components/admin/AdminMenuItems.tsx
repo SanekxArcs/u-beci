@@ -15,8 +15,6 @@ import { Item } from '@/sanity/types'
 import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
 import { createMenuItem, updateMenuItem, deleteMenuItem } from '@/lib/menuItemMutations'
 import { fetchAllCategories } from '@/lib/fetchCategories'
-import { uploadImageToSanity } from '@/lib/uploadImageToSanity'
-import Image from 'next/image'
 
 // Helper for category reference
 const getCategoryRef = (id: string) => ({ _type: "reference" as const, _ref: id })
@@ -26,26 +24,42 @@ export function AdminMenuItems() {
   const [searchQuery, setSearchQuery] = useState('')
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [isAddingItem, setIsAddingItem] = useState(false)
-  // Store category and image as strings in form state
-  const [newItem, setNewItem] = useState<Partial<Item> & { categoryId?: string; imageUrl?: string }>({
+  // Remove image-related fields from form state
+  const [newItem, setNewItem] = useState<Partial<Item> & { categoryId?: string }>({
     title: '',
     description: '',
     price: 0,
     categoryId: '',
     isAvailable: true,
-    imageUrl: '',
     unit: undefined,
     ingredients: [],
   })
-  const [editForm, setEditForm] = useState<Partial<Item> & { categoryId?: string; imageUrl?: string }>({})
+  const [editForm, setEditForm] = useState<Partial<Item> & { categoryId?: string }>({})
   const [categories, setCategories] = useState<{ _id: string; title: string }[]>([])
-  const [newImageFile, setNewImageFile] = useState<File | null>(null)
-  const [newImagePreview, setNewImagePreview] = useState<string | null>(null)
-  const [editImageFile, setEditImageFile] = useState<File | null>(null)
-  const [editImagePreview, setEditImagePreview] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchAllMenuItems().then(setMenuItems)
+    fetchAllMenuItems().then(data => {
+      setMenuItems(
+        data.map(item => ({
+          _id: item._id,
+          _type: item._type,
+          _createdAt: item._createdAt,
+          _updatedAt: item._updatedAt,
+          _rev: item._rev,
+          title: item.title ?? '',
+          slug: item.slug ?? undefined,
+          price: item.price ?? 0,
+          unit: item.unit ?? undefined,
+          category: item.category
+            ? { _ref: item.category._id, _type: 'reference' }
+            : undefined,
+          description: item.description ?? '',
+          ingredients: item.ingredients ?? [],
+          isAvailable: item.isAvailable ?? true,
+          // mainImage removed
+        }) as Item)
+      )
+    })
     fetchAllCategories().then(cats => setCategories(cats.map(c => ({ _id: c._id, title: c.title || '' }))))
   }, [])
 
@@ -54,49 +68,18 @@ export function AdminMenuItems() {
     (item.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // Handle image file selection for add
-  const handleNewImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null
-    setNewImageFile(file)
-    setNewItem({ ...newItem, imageUrl: '' })
-    if (file) {
-      setNewImagePreview(URL.createObjectURL(file))
-    } else {
-      setNewImagePreview(null)
-    }
-  }
-
-  // Handle image file selection for edit
-  const handleEditImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null
-    setEditImageFile(file)
-    setEditForm({ ...editForm, imageUrl: '' })
-    if (file) {
-      setEditImagePreview(URL.createObjectURL(file))
-    } else {
-      setEditImagePreview(null)
-    }
-  }
+  // Remove image file handlers
 
   const handleAddItem = async () => {
     if (!newItem.title || !newItem.categoryId) return
-    let imageAssetId = ''
-    if (newImageFile) {
-      imageAssetId = await uploadImageToSanity(newImageFile)
-    } else if (newItem.imageUrl) {
-      imageAssetId = newItem.imageUrl
-    }
     const itemToCreate: Omit<Item, '_id' | '_createdAt' | '_updatedAt' | '_rev'> = {
       ...newItem,
       _type: 'item',
       category: getCategoryRef(newItem.categoryId),
-      mainImage: imageAssetId ? { _type: 'image', asset: { _type: 'reference', _ref: imageAssetId } } : undefined,
     }
     const created = await createMenuItem(itemToCreate)
     setMenuItems([created, ...menuItems])
-    setNewItem({ title: '', description: '', price: 0, categoryId: '', isAvailable: true, imageUrl: '', unit: undefined, ingredients: [] })
-    setNewImageFile(null)
-    setNewImagePreview(null)
+    setNewItem({ title: '', description: '', price: 0, categoryId: '', isAvailable: true, unit: undefined, ingredients: [] })
     setIsAddingItem(false)
     toast.success('Menu item added successfully')
   }
@@ -106,30 +89,18 @@ export function AdminMenuItems() {
     setEditForm({
       ...item,
       categoryId: typeof item.category === 'object' && item.category?._ref ? item.category._ref : '',
-      imageUrl: item.mainImage && item.mainImage.asset ? item.mainImage.asset._ref : '',
     })
-    setEditImageFile(null)
-    setEditImagePreview(null)
   }
 
   const handleUpdateItem = async () => {
     if (!editingItem || !editForm.title || !editForm.categoryId) return
-    let imageAssetId = ''
-    if (editImageFile) {
-      imageAssetId = await uploadImageToSanity(editImageFile)
-    } else if (editForm.imageUrl) {
-      imageAssetId = editForm.imageUrl
-    }
     const updates: Partial<Item> = {
       ...editForm,
       category: getCategoryRef(editForm.categoryId),
-      mainImage: imageAssetId ? { _type: 'image', asset: { _type: 'reference', _ref: imageAssetId } } : undefined,
     }
     const updated = await updateMenuItem(editingItem._id, updates)
     setMenuItems(menuItems.map(item => item._id === updated._id ? updated : item))
     setEditingItem(null)
-    setEditImageFile(null)
-    setEditImagePreview(null)
     toast.success('Menu item updated successfully')
   }
 
@@ -221,22 +192,7 @@ export function AdminMenuItems() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="image" className="text-right">
-                  Zdjęcie
-                </Label>
-                <div className="col-span-3 flex flex-col gap-2">
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleNewImageChange}
-                  />
-                  {newImagePreview && (
-                    <Image src={newImagePreview} alt="Podgląd" width={96} height={96} className="h-24 rounded object-cover border" />
-                  )}
-                </div>
-              </div>
+              {/* Removed image upload UI */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="isSpecial" className="text-right">
                   Dostępność
@@ -359,24 +315,7 @@ export function AdminMenuItems() {
                               </SelectContent>
                             </Select>
                           </div>
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="edit-image" className="text-right">
-                              Zdjęcie
-                            </Label>
-                            <div className="col-span-3 flex flex-col gap-2">
-                              <Input
-                                id="edit-image"
-                                type="file"
-                                accept="image/*"
-                                onChange={handleEditImageChange}
-                              />
-                              {editImagePreview ? (
-                                <Image src={editImagePreview} alt="Podgląd" width={96} height={96} className="h-24 rounded object-cover border" />
-                              ) : (editForm.imageUrl && (
-                                <span className="text-xs text-muted-foreground">Obecne zdjęcie: {editForm.imageUrl}</span>
-                              ))}
-                            </div>
-                          </div>
+                          {/* Removed image upload UI */}
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="edit-isSpecial" className="text-right">
                               Dostępność

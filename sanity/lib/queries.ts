@@ -100,3 +100,22 @@ export const ITEM_FULL_QUERY = defineQuery(`*[_type == "item" && _id == $id][0]{
   isAvailable,
   body
 }`);
+
+export const ALL_MENU_ITEMS_QUERY =
+  defineQuery(`*[_type == "item"]|order(_createdAt desc){
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  _rev,
+  title,
+  slug,
+  mainImage,
+  price,
+  unit,
+  category->{_id, title, slug, description},
+  description,
+  ingredients,
+  isAvailable,
+  body
+}`);

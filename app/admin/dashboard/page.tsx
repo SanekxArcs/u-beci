@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
 import { fetchDayMenusWithItems } from '@/lib/fetchDayMenus'
-import { Item, DAY_MENUS_WITH_ITEMS_QUERYResult } from '@/sanity/types'
+import { ALL_MENU_ITEMS_QUERYResult } from '@/sanity/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -14,8 +14,8 @@ import { LogOut, PlusCircle, FileText, CalendarDays } from 'lucide-react'
 
 export default function AdminDashboardPage() {
   const router = useRouter()
-  const [menuItems, setMenuItems] = useState<Item[]>([])
-  const [dailyMenus, setDailyMenus] = useState<DAY_MENUS_WITH_ITEMS_QUERYResult>([])
+  const [menuItems, setMenuItems] = useState<ALL_MENU_ITEMS_QUERYResult>([]);
+  const [dailyMenus, setDailyMenus] = useState<ALL_MENU_ITEMS_QUERYResult>([]);
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

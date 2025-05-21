@@ -34,16 +34,16 @@ export default function AdminDashboardPage() {
 
 
   if (loading) {
-    return <div className="container px-4 py-8 md:px-6 md:py-12 mx-auto">Loading...</div>
+    return <div className="container px-4 py-8 md:px-6 md:py-12 mx-auto">Ładowanie...</div>
   }
 
   return (
     <div className="container px-4 py-8 md:px-6 md:py-12 mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Panel administracyjny</h1>
           <p className="text-muted-foreground">
-            Manage your menu and daily specials.
+            Zarządzaj menu i codziennymi specjalnościami.
           </p>
         </div>
       </div>
@@ -52,59 +52,59 @@ export default function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Menu Items
+              Wszystkie pozycje w menu
             </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{menuItems.length}</div>
-            <p className="text-xs text-muted-foreground">items in menu</p>
+            <p className="text-xs text-muted-foreground">pozycji w menu</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Planned Daily Menus
+              Zaplanowane menu dnia
             </CardTitle>
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dailyMenus.length}</div>
             <p className="text-xs text-muted-foreground">
-              different daily menus
+              różne menu dnia
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Available Items
+              Dostępne pozycje
             </CardTitle>
             <PlusCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{availableCount}</div>
-            <p className="text-xs text-muted-foreground">available now</p>
+            <p className="text-xs text-muted-foreground">dostępne teraz</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
-              Unavailable Items
+              Niedostępne pozycje
             </CardTitle>
             <PlusCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{unavailableCount}</div>
-            <p className="text-xs text-muted-foreground">not available</p>
+            <p className="text-xs text-muted-foreground">niedostępne</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="menu" className="w-full">
         <TabsList className="grid grid-cols-2 mb-8">
-          <TabsTrigger value="menu">Menu Items</TabsTrigger>
-          <TabsTrigger value="daily">Daily Menu</TabsTrigger>
+          <TabsTrigger value="menu">Pozycje w menu</TabsTrigger>
+          <TabsTrigger value="daily">Menu dnia</TabsTrigger>
         </TabsList>
         <TabsContent value="menu">
           <AdminMenuItems />

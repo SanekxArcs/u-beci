@@ -142,44 +142,44 @@ export function AdminDailyMenu() {
   }
 
   if (loading) {
-    return <div>Loading daily menus...</div>
+    return <div>Ładowanie menu dziennego...</div>
   }
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Daily Menus</h2>
+        <h2 className="text-xl font-semibold">Menu dzienne</h2>
         <div className="flex gap-2">
           <Button onClick={handleRefresh} variant="outline">
-            Refresh
+            Odśwież
           </Button>
           <Button onClick={() => setHidePast(h => !h)} variant="outline">
-            {hidePast ? 'Show Past' : 'Hide Past'}
+            {hidePast ? 'Pokaż przeszłe' : 'Ukryj przeszłe'}
           </Button>
           <Button onClick={() => setSortAsc(s => !s)} variant="outline">
-            Sort by Date {sortAsc ? '▲' : '▼'}
+            Sortuj wg daty {sortAsc ? '▲' : '▼'}
           </Button>
           <Button onClick={() => openDialog()}>
-            <PlusCircle className="h-4 w-4 mr-2" /> Add Daily Menu
+            <PlusCircle className="h-4 w-4 mr-2" /> Dodaj menu dnia
           </Button>
         </div>
       </div>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{editingMenu ? (isCopy ? 'Copy Daily Menu' : 'Edit Daily Menu') : 'Create New Daily Menu'}</DialogTitle>
+            <DialogTitle>{editingMenu ? (isCopy ? 'Kopiuj menu dnia' : 'Edytuj menu dnia') : 'Utwórz nowe menu dnia'}</DialogTitle>
             <DialogDescription>
-              {editingMenu ? (isCopy ? 'Select a new date and copy menu items.' : 'Update the date, menu items, and description for this daily menu.') : 'Select a date, choose menu items, and add a description for that day.'}
+              {editingMenu ? (isCopy ? 'Wybierz nową datę i skopiuj pozycje menu.' : 'Zaktualizuj datę, pozycje menu i opis dla tego menu dnia.') : 'Wybierz datę, pozycje menu i dodaj opis na ten dzień.'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-6 py-4">
             <div className="space-y-2">
-              <Label>Select Date</Label>
+              <Label>Wybierz datę</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant={"outline"} className="w-full justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Wybierz datę</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -188,28 +188,28 @@ export function AdminDailyMenu() {
               </Popover>
             </div>
             <div className="space-y-2">
-              <Label>Select Menu Items</Label>
+              <Label>Wybierz pozycje menu</Label>
               <div className="border rounded-md p-4 h-[300px] overflow-y-auto space-y-4">
                 {allMenuItems.map(item => (
                   <div key={item._id} className="flex items-center space-x-2">
                     <Checkbox id={`item-${item._id}`} checked={selectedItems.includes(item._id)} onCheckedChange={() => setSelectedItems(selectedItems.includes(item._id) ? selectedItems.filter(id => id !== item._id) : [...selectedItems, item._id])} />
                     <Label htmlFor={`item-${item._id}`} className="flex-grow cursor-pointer">
                       <div className="font-medium">{item.title}</div>
-                      <div className="text-xs text-muted-foreground">{item.category?.title || ''} - ₤{item.price != null ? item.price.toFixed(2) : ''}</div>
+                      <div className="text-xs text-muted-foreground">{item.category?.title || ''} - {item.price != null ? `${item.price.toFixed(2)} zł` : ''}</div>
                     </Label>
                   </div>
                 ))}
               </div>
-              <p className="text-sm text-muted-foreground">{selectedItems.length} item{selectedItems.length !== 1 && 's'} selected</p>
+              <p className="text-sm text-muted-foreground">{selectedItems.length} pozycj{selectedItems.length === 1 ? 'a' : (selectedItems.length >= 2 && selectedItems.length <= 4 ? 'e' : 'i')} wybrano</p>
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
-              <textarea className="border rounded-md p-2 w-full min-h-[60px]" value={description} onChange={e => setDescription(e.target.value)} placeholder="Opis (optional)" />
+              <Label>Opis</Label>
+              <textarea className="border rounded-md p-2 w-full min-h-[60px]" value={description} onChange={e => setDescription(e.target.value)} placeholder="Opis (opcjonalnie)" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeDialog}>Cancel</Button>
-            <Button onClick={handleSave}>{editingMenu && !isCopy ? 'Update Menu' : 'Save Menu'}</Button>
+            <Button variant="outline" onClick={closeDialog}>Anuluj</Button>
+            <Button onClick={handleSave}>{editingMenu && !isCopy ? 'Zaktualizuj menu' : 'Zapisz menu'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -222,20 +222,20 @@ export function AdminDailyMenu() {
               <Card key={menu._id}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-lg font-medium">
-                    {menuDate ? format(menuDate, "PPPP") : 'No date'}
+                    {menuDate ? format(menuDate, "PPPP") : 'Brak daty'}
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="icon" onClick={() => openDialog(menu, false)}>
                       <Pencil className="h-4 w-4" />
-                      <span className="sr-only">Edit</span>
+                      <span className="sr-only">Edytuj</span>
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => openDialog(menu, true)}>
                       <Copy className="h-4 w-4" />
-                      <span className="sr-only">Copy</span>
+                      <span className="sr-only">Kopiuj</span>
                     </Button>
                     <Button variant="outline" size="icon" onClick={() => handleDelete(menu._id)} className="text-destructive hover:text-destructive hover:bg-destructive/10">
                       <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Delete</span>
+                      <span className="sr-only">Usuń</span>
                     </Button>
                   </div>
                 </CardHeader>
@@ -244,9 +244,9 @@ export function AdminDailyMenu() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Item</TableHead>
-                          <TableHead>Category</TableHead>
-                          <TableHead className="text-right">Price</TableHead>
+                          <TableHead>Pozycja</TableHead>
+                          <TableHead>Kategoria</TableHead>
+                          <TableHead className="text-right">Cena</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -254,13 +254,13 @@ export function AdminDailyMenu() {
                           <TableRow key={item._id + '-' + idx}>
                             <TableCell className="font-medium">{item.title}</TableCell>
                             <TableCell>{item.category?.title || ''}</TableCell>
-                            <TableCell className="text-right">{item.price != null ? `₤${item.price.toFixed(2)}` : ''}</TableCell>
+                            <TableCell className="text-right">{item.price != null ? `${item.price.toFixed(2)} zł` : ''}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   ) : (
-                    <p className="text-muted-foreground">No items selected for this day.</p>
+                    <p className="text-muted-foreground">Brak pozycji wybranych na ten dzień.</p>
                   )}
                 </CardContent>
               </Card>
@@ -268,7 +268,7 @@ export function AdminDailyMenu() {
           })
         ) : (
           <div className="text-center py-12 border rounded-lg">
-            <p className="text-muted-foreground">No daily menus created yet.</p>
+            <p className="text-muted-foreground">Nie utworzono jeszcze żadnego menu dnia.</p>
           </div>
         )}
       </div>

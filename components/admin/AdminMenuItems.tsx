@@ -180,7 +180,7 @@ export function AdminMenuItems() {
                 <div className="flex-grow">
                   <div className="flex justify-between">
                     <h3 className="font-bold">{item.title}</h3>
-                    <span className="font-medium">${item.price ? item.price.toFixed(2) : ''}</span>
+                    <span className="font-medium">{item.price ? `${item.price.toFixed(2)} zł` : ''}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
                   <div className="flex items-center gap-2 mt-2">
@@ -210,7 +210,7 @@ export function AdminMenuItems() {
                     onClick={() => handleEditOpen(item)}
                   >
                     <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Edit</span>
+                    <span className="sr-only">Edytuj</span>
                   </Button>
                   <Button 
                     variant="outline" 
@@ -219,7 +219,7 @@ export function AdminMenuItems() {
                     className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Delete</span>
+                    <span className="sr-only">Usuń</span>
                   </Button>
                 </div>
               </div>

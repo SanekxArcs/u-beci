@@ -17,11 +17,11 @@ export  function Footer({ info }: { info?: INFO_QUERYResult }) {
             </div>
             <p className="text-sm text-muted-foreground">
               {info?.description ||
-                "A cozy home food cafe offering delicious, authentic dishes in a warm, inviting atmosphere."}
+                "Przytulna domowa kawiarnia oferująca pyszne, autentyczne dania w ciepłej, przyjaznej atmosferze."}
             </p>
           </div>
           <div className="space-y-3">
-            <h3 className="font-medium">Hours</h3>
+            <h3 className="font-medium">Godziny otwarcia</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               {info?.hours?.map((h) => (
                 <li key={h._key} className="flex items-center gap-2">
@@ -34,7 +34,7 @@ export  function Footer({ info }: { info?: INFO_QUERYResult }) {
             </ul>
           </div>
           <div className="space-y-3">
-            <h3 className="font-medium">Contact</h3>
+            <h3 className="font-medium">Kontakt</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               {info?.address && (
                 <li className="flex items-center gap-2">
@@ -64,7 +64,7 @@ export  function Footer({ info }: { info?: INFO_QUERYResult }) {
             </ul>
           </div>
           <div className="space-y-3">
-            <h3 className="font-medium">Follow Us</h3>
+            <h3 className="font-medium">Znajdź nas</h3>
             <div className="flex gap-4">
               {info?.socialMedia?.map((sm) => (
                 <Link
@@ -75,13 +75,13 @@ export  function Footer({ info }: { info?: INFO_QUERYResult }) {
                   {sm.platform === "facebook" && (
                     <Facebook className="h-5 w-5" />
                   )}
-                  {/* Add more icons for other platforms if needed */}
+                  {/* Dodaj więcej ikon dla innych platform jeśli potrzeba */}
                   <span className="sr-only">{sm.platform}</span>
                 </Link>
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              © 2025 {info?.title || "Bar u Beci"}. All rights reserved.
+              © 2025 {info?.title || "Bar u Beci"}. Wszelkie prawa zastrzeżone.
             </p>
           </div>
         </div>

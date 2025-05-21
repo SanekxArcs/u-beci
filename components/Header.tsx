@@ -52,7 +52,7 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
                     : "text-muted-foreground"
                 }`}
               >
-                Dashboard
+                Panel
               </Link>
             </Button>
             <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
                   className="mt-4 md:mt-0"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Logout
+                  Wyloguj
                 </Button>
               )}
               <ModeToggle />
@@ -91,7 +91,7 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
             <SheetTrigger asChild>
               <Button variant="outline" size="icon">
                 <MenuIcon className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+                <span className="sr-only">Przełącz menu nawigacji</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
@@ -106,7 +106,7 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
                   href="/about"
                   className="text-lg font-medium transition-colors hover:text-primary"
                 >
-                  About
+                  O nas
                 </Link>
                 {isAdmin && (
                   <>

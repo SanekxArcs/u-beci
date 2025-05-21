@@ -31,21 +31,21 @@ export default function AdminPage() {
       <div className="w-full max-w-md">
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">Logowanie administratora</CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access the admin dashboard
+              Wprowadź dane logowania, aby uzyskać dostęp do panelu administracyjnego
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
               {error && (
                 <Alert variant="destructive">
-                  <AlertTitle>Error</AlertTitle>
+                  <AlertTitle>Błąd</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">Nazwa użytkownika</Label>
                 <Input 
                   id="username" 
                   type="text" 
@@ -55,7 +55,7 @@ export default function AdminPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Hasło</Label>
                 <Input 
                   id="password" 
                   type="password" 
@@ -65,15 +65,15 @@ export default function AdminPage() {
                 />
               </div>
               <div className="text-xs text-muted-foreground">
-                <p className="mt-2">Demo credentials:</p>
-                <p>Username: admin</p>
-                <p>Password: password</p>
+                <p className="mt-2">Dane demo:</p>
+                <p>Nazwa użytkownika: admin</p>
+                <p>Hasło: password</p>
               </div>
             </CardContent>
             <CardFooter>
               <Button className="w-full" type="submit">
                 <Lock className="mr-2 h-4 w-4" />
-                Login
+                Zaloguj się
               </Button>
             </CardFooter>
           </form>

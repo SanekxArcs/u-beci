@@ -97,7 +97,7 @@ export function MenuItemDialogForm({
             <Label htmlFor="category" className="text-right">Kategoria</Label>
             <Select value={item.categoryId} onValueChange={value => setItem({ ...item, categoryId: value })}>
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Wybierz kategorię" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map(category => (

@@ -216,7 +216,7 @@ export function AdminMenuItems() {
     setMenuItems([created, ...menuItems]);
     setNewItem({ title: '', description: '', price: 0, categoryId: '', isAvailable: true, unit: '', ingredients: [], body: undefined, slug: undefined });
     setIsAddingItem(false);
-    toast.success('Menu item added successfully');
+    toast.success('Pozycja została dodana pomyślnie');
   };
 
   const handleEditOpen = (item: Item) => {
@@ -274,13 +274,35 @@ export function AdminMenuItems() {
     const updated = await updateMenuItem(editingItem._id, updates);
     setMenuItems(menuItems.map(item => item._id === updated._id ? updated : item));
     setEditingItem(null);
-    toast.success('Menu item updated successfully');
+    toast.success('Pozycja została zaktualizowana pomyślnie');
   };
 
   const handleDeleteItem = async (_id: string) => {
-    await deleteMenuItem(_id)
-    setMenuItems(menuItems.filter(item => item._id !== _id))
-    toast.success('Menu item deleted successfully')
+    try {
+      await deleteMenuItem(_id)
+      setMenuItems(menuItems.filter(item => item._id !== _id))
+      toast.success('Pozycja została usunięta pomyślnie')
+    } catch (error: unknown) {
+      // Type guard for error with response.status
+      function isConflictError(err: unknown): err is { response: { status: number } } {
+        return (
+          typeof err === 'object' &&
+          err !== null &&
+          'response' in err &&
+          typeof (err as { response?: unknown }).response === 'object' &&
+          (err as { response: { status?: unknown } }).response !== null &&
+          'status' in (err as { response: { status?: unknown } }).response &&
+          (err as { response: { status?: unknown } }).response.status === 409
+        );
+      }
+      if (isConflictError(error)) {
+        toast.error('Nie można usunąć tej pozycji, ponieważ jest ona nadal przypisana do jednego z menu dnia. Najpierw usuń ją ze wszystkich menu dnia.')
+      } else {
+        toast.error(
+          "Nie można usunąć tej pozycji, ponieważ jest ona nadal przypisana do jednego z menu dnia. Najpierw usuń ją ze wszystkich menu dnia."
+        );
+      }
+    }
   }
   console.log('Menu items:', menuItems)
   console.log('Categories:', categories)

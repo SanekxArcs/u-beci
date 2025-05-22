@@ -10,10 +10,72 @@ import { Item } from '@/sanity/types'
 import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
 import { createMenuItem, updateMenuItem, deleteMenuItem } from '@/lib/menuItemMutations'
 import { fetchAllCategories } from '@/lib/fetchCategories'
-import { MenuItemDialogForm } from './MenuItemDialogForm'
+import { MenuItemDialogForm, MenuItemFormData } from './MenuItemDialogForm'
+import type { BlockContent, } from '@/sanity/types'
 
-// Helper for category reference
-const getCategoryRef = (id: string) => ({ _type: "reference" as const, _ref: id })
+
+// Helper to add _key to block content (no any, use unknown and type guards, and fix style type)
+function ensureBlockContentKeys(body: unknown): BlockContent | undefined {
+  if (!Array.isArray(body)) return undefined;
+  return body.map((block): BlockContent[number] => {
+    if (
+      typeof block === 'object' &&
+      block !== null &&
+      '_type' in block &&
+      (block as { _type: string })._type === 'block'
+    ) {
+      const b = block as {
+        _type: 'block';
+        _key?: string;
+        style?: 'normal' | 'h1' | 'h2' | 'h3' | 'h4' | 'blockquote';
+        children?: unknown[];
+        [key: string]: unknown;
+      };
+      return {
+        ...b,
+        style: (b.style as 'normal' | 'h1' | 'h2' | 'h3' | 'h4' | 'blockquote') ?? 'normal',
+        _key: b._key || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)),
+        children: Array.isArray(b.children)
+          ? b.children
+              .filter((child): child is NonNullable<typeof b.children>[number] =>
+                typeof child === 'object' && child !== null && '_type' in child && (child as { _type: string })._type === 'span'
+              )
+              .map((child) => {
+                const c = child as {
+                  _type: 'span';
+                  _key?: string;
+                  text?: string;
+                  marks?: string[];
+                };
+                return {
+                  ...c,
+                  _key:
+                    c._key ||
+                    (typeof crypto !== 'undefined' && crypto.randomUUID
+                      ? crypto.randomUUID()
+                      : Math.random().toString(36).slice(2)),
+                };
+              })
+          : [],
+      };
+    }
+    // For image blocks or others
+    if (
+      typeof block === 'object' &&
+      block !== null &&
+      '_type' in block &&
+      (block as { _type: string })._type === 'image'
+    ) {
+      const img = block as { _type: 'image'; _key?: string; [key: string]: unknown };
+      return {
+        ...img,
+        _key: img._key || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)),
+      };
+    }
+    // fallback for unknown block types
+    return block as BlockContent[number];
+  });
+}
 
 export function AdminMenuItems() {
   const [menuItems, setMenuItems] = useState<Item[]>([])
@@ -21,16 +83,33 @@ export function AdminMenuItems() {
   const [editingItem, setEditingItem] = useState<Item | null>(null)
   const [isAddingItem, setIsAddingItem] = useState(false)
   // Remove image-related fields from form state
-  const [newItem, setNewItem] = useState<Partial<Item> & { categoryId?: string }>({
-    title: '',
-    description: '',
-    price: 0,
-    categoryId: '',
-    isAvailable: true,
-    unit: undefined,
-    ingredients: [],
-  })
-  const [editForm, setEditForm] = useState<Partial<Item> & { categoryId?: string }>({})
+  const [newItem, setNewItem] = useState<MenuItemFormData & { categoryId?: string }>(
+    {
+      title: '',
+      description: '',
+      price: 0,
+      categoryId: '',
+      isAvailable: true,
+      unit: '',
+      ingredients: [],
+      body: undefined,
+      slug: undefined,
+    }
+  )
+  const [editForm, setEditForm] = useState<MenuItemFormData & { categoryId?: string }>(
+    {
+      title: '',
+      description: '',
+      price: 0,
+      categoryId: '',
+      isAvailable: true,
+      unit: '',
+      ingredients: [],
+      body: undefined,
+      slug: undefined,
+    }
+  )
+
   const [categories, setCategories] = useState<{ _id: string; title: string }[]>([])
 
   useEffect(() => {
@@ -64,7 +143,7 @@ export function AdminMenuItems() {
     (item.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleAddItem = async (docOverride?: any) => {
+  const handleAddItem = async (docOverride?: MenuItemFormData & { categoryId?: string }) => {
     const doc = docOverride || newItem;
     const {
       title,
@@ -79,20 +158,23 @@ export function AdminMenuItems() {
       ...rest
     } = doc;
     const itemToCreate: Omit<Item, '_id' | '_createdAt' | '_updatedAt' | '_rev'> = {
+      _type: 'item',
       title,
-      slug: { current: slug || (title ? title.toLowerCase().replace(/\s+/g, '-') : '') },
+      slug: { _type: 'slug', current: slug || (title ? title.toLowerCase().replace(/\s+/g, '-') : '') },
       price,
-      unit,
+      unit: unit as Item['unit'],
       description,
       ingredients,
       isAvailable,
-      body: Array.isArray(body) ? body : (body ? [{ _type: 'block', children: [{ _type: 'span', text: body }] }] : undefined),
+      body: Array.isArray(body)
+        ? ensureBlockContentKeys(body)
+        : (body ? ensureBlockContentKeys([{ _type: 'block', style: 'normal', _key: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)), children: [{ _type: 'span', text: body, _key: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) }] }]) : undefined),
       category: categoryId ? { _type: 'reference', _ref: categoryId } : undefined,
       ...rest
     };
     const created = await createMenuItem(itemToCreate);
     setMenuItems([created, ...menuItems]);
-    setNewItem({ title: '', description: '', price: 0, categoryId: '', isAvailable: true, unit: undefined, ingredients: [] });
+    setNewItem({ title: '', description: '', price: 0, categoryId: '', isAvailable: true, unit: '', ingredients: [], body: undefined, slug: undefined });
     setIsAddingItem(false);
     toast.success('Menu item added successfully');
   };
@@ -100,12 +182,19 @@ export function AdminMenuItems() {
   const handleEditOpen = (item: Item) => {
     setEditingItem(item)
     setEditForm({
-      ...item,
+      title: item.title ?? '',
+      description: item.description ?? '',
+      price: item.price ?? 0,
+      unit: item.unit ?? '',
+      ingredients: item.ingredients ?? [],
+      isAvailable: item.isAvailable ?? true,
+      body: item.body ?? undefined,
+      slug: item.slug?.current ?? '',
       categoryId: typeof item.category === 'object' && item.category?._ref ? item.category._ref : '',
     })
   }
 
-  const handleUpdateItem = async (docOverride?: any) => {
+  const handleUpdateItem = async (docOverride?: MenuItemFormData & { categoryId?: string }) => {
     if (!editingItem || !editForm.title || !editForm.categoryId) return;
     const doc = docOverride || editForm;
     const {
@@ -122,13 +211,15 @@ export function AdminMenuItems() {
     } = doc;
     const updates: Partial<Item> = {
       title,
-      slug: { current: slug || (title ? title.toLowerCase().replace(/\s+/g, '-') : '') },
+      slug: { _type: 'slug', current: slug || (title ? title.toLowerCase().replace(/\s+/g, '-') : '') },
       price,
-      unit,
+      unit: unit as Item['unit'],
       description,
       ingredients,
       isAvailable,
-      body: Array.isArray(body) ? body : (body ? [{ _type: 'block', children: [{ _type: 'span', text: body }] }] : undefined),
+      body: Array.isArray(body)
+        ? ensureBlockContentKeys(body)
+        : (body ? ensureBlockContentKeys([{ _type: 'block', style: 'normal', _key: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)), children: [{ _type: 'span', text: body, _key: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) }] }]) : undefined),
       category: categoryId ? { _type: 'reference', _ref: categoryId } : undefined,
       ...rest
     };
@@ -167,7 +258,7 @@ export function AdminMenuItems() {
           item={newItem}
           setItem={setNewItem}
           categories={categories}
-          onSubmit={handleAddItem}
+          onSubmit={doc => { void handleAddItem(doc as MenuItemFormData & { categoryId?: string }); }}
           isEdit={false}
         />
       </div>
@@ -201,7 +292,7 @@ export function AdminMenuItems() {
                     item={editForm}
                     setItem={setEditForm}
                     categories={categories}
-                    onSubmit={handleUpdateItem}
+                    onSubmit={doc => { void handleUpdateItem(doc as MenuItemFormData & { categoryId?: string }); }}
                     isEdit={true}
                   />
                   <Button 

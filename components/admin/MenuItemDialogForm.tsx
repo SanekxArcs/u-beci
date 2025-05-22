@@ -6,23 +6,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import type { BlockContent } from '@/sanity/types';
 
 interface CategoryOption {
   _id: string;
   title: string;
 }
-
-interface BlockContentSpan {
-  _type: 'span';
-  text: string;
-}
-
-interface BlockContentBlock {
-  _type: 'block';
-  children: BlockContentSpan[];
-}
-
-type BlockContent = BlockContentBlock[];
 
 export interface MenuItemFormData {
   title: string;
@@ -32,7 +21,7 @@ export interface MenuItemFormData {
   description: string;
   ingredients: string[];
   isAvailable: boolean;
-  body?: string | BlockContent;
+  body?: BlockContent;
   categoryId?: string;
   [key: string]: unknown;
 }
@@ -155,10 +144,16 @@ export function MenuItemDialogForm({
               id="body"
               value={
                 Array.isArray(item.body)
-                  ? item.body.map(block => block.children.map(child => child.text).join(' ')).join('\n')
-                  : item.body || ''
+                  ? item.body
+                      .map(block =>
+                        block._type === 'block' && Array.isArray(block.children)
+                          ? block.children.map(child => child.text).join(' ')
+                          : ''
+                      )
+                      .join('\n')
+                  : ''
               }
-              onChange={e => setItem({ ...item, body: e.target.value })}
+              onChange={e => setItem({ ...item, body: [{ _type: 'block', _key: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)), style: 'normal', children: [{ _type: 'span', text: e.target.value, _key: (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)) }] }] })}
               className="col-span-3"
               placeholder="Treść (opcjonalnie)"
             />

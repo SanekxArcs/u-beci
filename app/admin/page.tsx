@@ -64,11 +64,11 @@ export default function AdminPage() {
                   required
                 />
               </div>
-              <div className="text-xs text-muted-foreground">
+              {/* <div className="text-xs text-muted-foreground">
                 <p className="mt-2">Dane demo:</p>
                 <p>Nazwa użytkownika: admin</p>
                 <p>Hasło: password</p>
-              </div>
+              </div> */}
             </CardContent>
             <CardFooter>
               <Button className="w-full" type="submit">

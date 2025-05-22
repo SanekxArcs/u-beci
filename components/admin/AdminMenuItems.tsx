@@ -338,7 +338,7 @@ export function AdminMenuItems() {
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                     {item.description}
                   </p>
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center flex-wrap gap-2 mt-2">
                     <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
                       {typeof item.category === "object" &&
                       "title" in item.category

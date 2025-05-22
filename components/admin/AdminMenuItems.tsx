@@ -111,6 +111,7 @@ export function AdminMenuItems() {
   )
 
   const [categories, setCategories] = useState<{ _id: string; title: string }[]>([])
+  const [sortAsc, setSortAsc] = useState(true);
 
   useEffect(() => {
     Promise.all([fetchAllMenuItems(), fetchAllCategories()]).then(([data, cats]) => {
@@ -142,10 +143,45 @@ export function AdminMenuItems() {
     });
   }, []);
 
+  const handleRefresh = async () => {
+    const [data, cats] = await Promise.all([fetchAllMenuItems(), fetchAllCategories()]);
+    setCategories(cats.map(c => ({ _id: c._id, title: c.title || '' })));
+    setMenuItems(
+      data.map(item => {
+        let categoryObj = undefined;
+        if (item.category && typeof item.category === 'object' && '_id' in item.category && item.category._id != null) {
+          categoryObj = cats.find(c => c._id === (item.category as { _id: string })._id);
+        }
+        return {
+          _id: item._id,
+          _type: item._type,
+          _createdAt: item._createdAt,
+          _updatedAt: item._updatedAt,
+          _rev: item._rev,
+          title: item.title ?? '',
+          slug: item.slug ?? undefined,
+          price: item.price ?? 0,
+          unit: item.unit ?? undefined,
+          category: categoryObj ? { _id: categoryObj._id, title: categoryObj.title } : undefined,
+          description: item.description ?? '',
+          ingredients: item.ingredients ?? [],
+          isAvailable: item.isAvailable ?? true,
+        } as Item;
+      })
+    );
+    toast.success("Odświeżono pozycje z Chmury");
+  };
+
   const filteredItems = menuItems.filter(item =>
     (item.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const sortedItems = [...filteredItems].sort((a, b) => {
+    const tA = (a.title || '').toLowerCase();
+    const tB = (b.title || '').toLowerCase();
+    return sortAsc ? tA.localeCompare(tB, 'pl') : tB.localeCompare(tA, 'pl');
+  });
 
   const handleAddItem = async (docOverride?: MenuItemFormData & { categoryId?: string }) => {
     const doc = docOverride || newItem;
@@ -253,9 +289,17 @@ export function AdminMenuItems() {
             className="pl-10"
           />
         </div>
-        <Button className="w-full md:w-auto" onClick={() => setIsAddingItem(true)}>
-          Dodaj nową pozycję
-        </Button>
+        <div className="flex gap-2 w-full md:w-auto">
+          <Button variant="outline" onClick={() => setSortAsc((asc) => !asc)}>
+            Sortuj {sortAsc ? 'A-Z' : 'Z-A'}
+          </Button>
+          <Button variant="outline" onClick={handleRefresh}>
+            Odśwież
+          </Button>
+          <Button onClick={() => setIsAddingItem(true)}>
+            Dodaj nową pozycję
+          </Button>
+        </div>
         <MenuItemDialogForm
           open={isAddingItem}
           onOpenChange={setIsAddingItem}
@@ -268,8 +312,8 @@ export function AdminMenuItems() {
       </div>
 
       <div className="space-y-4">
-        {filteredItems.length > 0 ? (
-          filteredItems.map((item) => (
+        {sortedItems.length > 0 ? (
+          sortedItems.map((item) => (
             <Card key={item._id} className="p-4">
               <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div className="flex-grow">

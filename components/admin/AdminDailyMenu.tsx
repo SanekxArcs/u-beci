@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
 import { createDayMenu, updateDayMenu, deleteDayMenu } from '@/lib/dayMenuMutations'
 import type { DAY_MENUS_WITH_ITEMS_QUERYResult, ALL_MENU_ITEMS_QUERYResult } from '@/sanity/types';
+import { toast } from "sonner"
 
 export function AdminDailyMenu() {
   const [dailyMenus, setDailyMenus] = useState<DAY_MENUS_WITH_ITEMS_QUERYResult>([])
@@ -53,6 +54,7 @@ export function AdminDailyMenu() {
     setDailyMenus(menus)
     setAllMenuItems(items)
     setLoading(false)
+    toast.success("Odświeżono menu dzienne z Chmury");
   }
 
   // Helper to determine if a menu is in the past

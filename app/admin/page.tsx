@@ -17,8 +17,8 @@ export default function AdminPage() {
   
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (username === 'admin' && password === 'password') {
+
+    if (username === process.env.NEXT_PUBLIC_ADMIN_USERNAME && password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       localStorage.setItem('isAuthenticated', 'true')
       router.push('/admin/dashboard')
     } else {
@@ -71,7 +71,7 @@ export default function AdminPage() {
               </div> */}
             </CardContent>
             <CardFooter>
-              <Button className="w-full" type="submit">
+              <Button className="w-full mt-4" type="submit">
                 <Lock className="mr-2 h-4 w-4" />
                 Zaloguj się
               </Button>

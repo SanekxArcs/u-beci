@@ -113,30 +113,34 @@ export function AdminMenuItems() {
   const [categories, setCategories] = useState<{ _id: string; title: string }[]>([])
 
   useEffect(() => {
-    fetchAllMenuItems().then(data => {
+    Promise.all([fetchAllMenuItems(), fetchAllCategories()]).then(([data, cats]) => {
+      setCategories(cats.map(c => ({ _id: c._id, title: c.title || '' })));
       setMenuItems(
-        data.map(item => ({
-          _id: item._id,
-          _type: item._type,
-          _createdAt: item._createdAt,
-          _updatedAt: item._updatedAt,
-          _rev: item._rev,
-          title: item.title ?? '',
-          slug: item.slug ?? undefined,
-          price: item.price ?? 0,
-          unit: item.unit ?? undefined,
-          category: item.category
-            ? { _ref: item.category._id, _type: 'reference' }
-            : undefined,
-          description: item.description ?? '',
-          ingredients: item.ingredients ?? [],
-          isAvailable: item.isAvailable ?? true,
-
-        }) as Item)
-      )
-    })
-    fetchAllCategories().then(cats => setCategories(cats.map(c => ({ _id: c._id, title: c.title || '' }))))
-  }, [])
+        data.map(item => {
+          let categoryObj = undefined;
+          if (item.category && typeof item.category === 'object' && '_id' in item.category && item.category._id != null) {
+            // TypeScript: item.category is not null here
+            categoryObj = cats.find(c => c._id === (item.category as { _id: string })._id);
+          }
+          return {
+            _id: item._id,
+            _type: item._type,
+            _createdAt: item._createdAt,
+            _updatedAt: item._updatedAt,
+            _rev: item._rev,
+            title: item.title ?? '',
+            slug: item.slug ?? undefined,
+            price: item.price ?? 0,
+            unit: item.unit ?? undefined,
+            category: categoryObj ? { _id: categoryObj._id, title: categoryObj.title } : undefined,
+            description: item.description ?? '',
+            ingredients: item.ingredients ?? [],
+            isAvailable: item.isAvailable ?? true,
+          } as Item;
+        })
+      );
+    });
+  }, []);
 
   const filteredItems = menuItems.filter(item =>
     (item.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||

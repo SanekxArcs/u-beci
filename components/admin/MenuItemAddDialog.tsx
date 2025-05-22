@@ -7,6 +7,12 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { PlusCircle } from 'lucide-react'
+import type { MenuItemFormData } from './MenuItemDialogForm';
+
+interface CategoryOption {
+  _id: string;
+  title: string;
+}
 
 export function MenuItemAddDialog({
   open,
@@ -18,9 +24,9 @@ export function MenuItemAddDialog({
 }: {
   open: boolean,
   onOpenChange: (open: boolean) => void,
-  newItem: any,
-  setNewItem: (item: any) => void,
-  categories: { _id: string; title: string }[],
+  newItem: MenuItemFormData,
+  setNewItem: (item: MenuItemFormData) => void,
+  categories: CategoryOption[],
   handleAddItem: () => void
 }) {
   return (

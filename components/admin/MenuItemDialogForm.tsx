@@ -7,6 +7,36 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
+interface CategoryOption {
+  _id: string;
+  title: string;
+}
+
+interface BlockContentSpan {
+  _type: 'span';
+  text: string;
+}
+
+interface BlockContentBlock {
+  _type: 'block';
+  children: BlockContentSpan[];
+}
+
+type BlockContent = BlockContentBlock[];
+
+export interface MenuItemFormData {
+  title: string;
+  slug?: string;
+  price: number;
+  unit: string;
+  description: string;
+  ingredients: string[];
+  isAvailable: boolean;
+  body?: string | BlockContent;
+  categoryId?: string;
+  [key: string]: unknown;
+}
+
 export function MenuItemDialogForm({
   open,
   onOpenChange,
@@ -18,10 +48,10 @@ export function MenuItemDialogForm({
 }: {
   open: boolean,
   onOpenChange: (open: boolean) => void,
-  item: any,
-  setItem: (item: any) => void,
-  categories: { _id: string; title: string }[],
-  onSubmit: (doc: any) => void,
+  item: MenuItemFormData,
+  setItem: (item: MenuItemFormData) => void,
+  categories: CategoryOption[],
+  onSubmit: (doc: Omit<MenuItemFormData, 'categoryId'> & { category?: { _type: 'reference'; _ref: string } }) => void,
   isEdit?: boolean
 }) {
   const handleSubmit = () => {
@@ -36,11 +66,9 @@ export function MenuItemDialogForm({
       isAvailable,
       body,
       categoryId,
-    //   mainImageAlt,
-    //   mainImageFile,
       ...rest
     } = item;
-    const doc: any = {
+    const doc: Omit<MenuItemFormData, 'categoryId'> & { category?: { _type: 'reference'; _ref: string } } = {
       title,
       slug: { current: slug || (title ? title.toLowerCase().replace(/\s+/g, '-') : '') },
       price,
@@ -123,7 +151,17 @@ export function MenuItemDialogForm({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="body" className="text-right">Treść</Label>
-            <Textarea id="body" value={item.body || ''} onChange={e => setItem({ ...item, body: e.target.value })} className="col-span-3" placeholder="Treść (opcjonalnie)" />
+            <Textarea
+              id="body"
+              value={
+                Array.isArray(item.body)
+                  ? item.body.map(block => block.children.map(child => child.text).join(' ')).join('\n')
+                  : item.body || ''
+              }
+              onChange={e => setItem({ ...item, body: e.target.value })}
+              className="col-span-3"
+              placeholder="Treść (opcjonalnie)"
+            />
           </div>
         </div>
         <DialogFooter>

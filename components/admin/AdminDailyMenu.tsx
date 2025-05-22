@@ -2,19 +2,18 @@
 
 import React, { useState, useEffect } from 'react'
 import { fetchDayMenusWithItems } from '@/lib/fetchDayMenus'
-import { DAY_MENUS_WITH_ITEMS_QUERYResult } from '@/sanity/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { format } from 'date-fns'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { CalendarIcon, PlusCircle, Pencil, Trash2, Copy } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
-import { ALL_MENU_ITEMS_QUERYResult } from '@/sanity/types'
 import { createDayMenu, updateDayMenu, deleteDayMenu } from '@/lib/dayMenuMutations'
+import type { DAY_MENUS_WITH_ITEMS_QUERYResult, ALL_MENU_ITEMS_QUERYResult } from '@/sanity/types';
 
 export function AdminDailyMenu() {
   const [dailyMenus, setDailyMenus] = useState<DAY_MENUS_WITH_ITEMS_QUERYResult>([])
@@ -22,7 +21,7 @@ export function AdminDailyMenu() {
   const [loading, setLoading] = useState(true)
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingMenu, setEditingMenu] = useState<any | null>(null)
+  const [editingMenu, setEditingMenu] = useState<DAY_MENUS_WITH_ITEMS_QUERYResult[number] | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [selectedItems, setSelectedItems] = useState<string[]>([])
   const [description, setDescription] = useState<string>('')
@@ -80,13 +79,13 @@ export function AdminDailyMenu() {
   })
 
   // Open dialog for add/edit/copy
-  const openDialog = (menu?: any, copyMode = false) => {
+  const openDialog = (menu?: DAY_MENUS_WITH_ITEMS_QUERYResult[number], copyMode = false) => {
     setEditingMenu(menu || null)
     setIsCopy(copyMode)
     setDialogOpen(true)
     if (menu) {
       setSelectedDate(copyMode ? undefined : (menu.date ? new Date(menu.date) : undefined))
-      setSelectedItems(menu.menu ? menu.menu.map((item: any) => item._id) : [])
+      setSelectedItems(menu.menu ? menu.menu.map((item) => item._id) : [])
       setDescription(menu.description || '')
     } else {
       setSelectedDate(undefined)
@@ -250,7 +249,7 @@ export function AdminDailyMenu() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {menuItems.map((item: any, idx: number) => (
+                        {menuItems.map((item, idx) => (
                           <TableRow key={item._id + '-' + idx}>
                             <TableCell className="font-medium">{item.title}</TableCell>
                             <TableCell>{item.category?.title || ''}</TableCell>

@@ -33,7 +33,12 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
 
         <div className="hidden md:flex items-center gap-6">
           <nav className="flex gap-2">
-            <Button variant="outline" size="sm" asChild>
+            <Button
+              className=" cursor-pointer"
+              variant="outline"
+              size="sm"
+              asChild
+            >
               <Link
                 href="/"
                 className={`text-sm font-medium transition-colors hover:text-primary ${
@@ -65,7 +70,12 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
               )} */}
               {!isAdmin && (
                 <>
-                  <Button variant="outline" size="sm" asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className=" cursor-pointer"
+                    asChild
+                  >
                     <Link href="/admin">Admin</Link>
                   </Button>
                 </>
@@ -75,7 +85,7 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
                   variant="outline"
                   onClick={handleLogout}
                   size="sm"
-                  className="mt-4 md:mt-0"
+                  className="mt-4 md:mt-0 cursor-pointer"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Wyloguj
@@ -96,35 +106,26 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
-              <nav className="flex flex-col gap-4 mt-8">
-                <Link
-                  href="/"
-                  className="text-lg font-medium transition-colors hover:text-primary"
-                >
-                  Menu
-                </Link>
-                <Link
-                  href="/about"
-                  className="text-lg font-medium transition-colors hover:text-primary"
-                >
-                  O nas
-                </Link>
-                {isAdmin && (
+              <nav className="flex flex-col gap-4 my-20 px-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link
+                    href="/"
+                    className="text-lg font-medium transition-colors hover:text-primary"
+                  >
+                    Menu
+                  </Link>
+                </Button>
+                {/* {isAdmin && (
                   <>
                     <Button variant="outline" size="sm" asChild>
                       <Link href="/studio">Studio</Link>
                     </Button>
                   </>
-                )}
+                )} */}
                 {!isAdmin && (
-                  <>
                     <Button variant="outline" size="sm" asChild>
                       <Link href="/admin">Admin</Link>
                     </Button>
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href="/studio">Studio</Link>
-                    </Button>
-                  </>
                 )}
               </nav>
             </SheetContent>

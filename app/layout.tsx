@@ -32,7 +32,7 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className={`${inter.variable} ${playfair.variable} font-sans min-h-screen h-screen`}
+        className={`${inter.variable} ${playfair.variable}  font-sans min-h-screen flex flex-col h-screen`}
       >
         <ThemeProvider
           attribute="class"

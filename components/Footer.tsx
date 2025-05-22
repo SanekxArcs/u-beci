@@ -5,7 +5,7 @@ import { INFO_QUERYResult } from '@/sanity/types';
 
 export  function Footer({ info }: { info?: INFO_QUERYResult }) {
   return (
-    <footer className="border-t bg-muted/40">
+    <footer className="border-t bg-muted/40 select-none w-full mt-auto">
       <div className="container px-4 py-8 md:px-6 md:py-12 mx-auto">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-3">
@@ -23,14 +23,20 @@ export  function Footer({ info }: { info?: INFO_QUERYResult }) {
           <div className="space-y-3">
             <h3 className="font-medium">Godziny otwarcia</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {info?.hours?.map((h) => (
-                <li key={h._key} className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  <span>
-                    {h.day}: {h.hours}
-                  </span>
-                </li>
-              ))}
+              {info?.hours?.map((h) => {
+                // Map JS day to Polish short names
+                const polishShortDays = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
+                const todayShort = polishShortDays[new Date().getDay()];
+                const isToday = h.day === todayShort;
+                return (
+                  <li key={h._key} className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span className={isToday ? "font-bold" : undefined}>
+                      {h.day}: {h.hours}
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
           <div className="space-y-3">
@@ -44,7 +50,7 @@ export  function Footer({ info }: { info?: INFO_QUERYResult }) {
                   >
                     <MapPin className="h-4 w-4" />
                     <span>
-                      {info.address.street}, {info.address.city},{" "}
+                      {info.address.street}, <br /> {info.address.city},{" "}
                       {info.address.postalCode}
                     </span>
                   </a>
@@ -81,7 +87,7 @@ export  function Footer({ info }: { info?: INFO_QUERYResult }) {
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              © 2025 {info?.title || "Bar u Beci"}. Wszelkie prawa zastrzeżone.
+              © {new Date().getFullYear()} {info?.title || "Bar u Beci"}. Wszelkie prawa zastrzeżone.
             </p>
           </div>
         </div>

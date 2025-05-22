@@ -1,38 +1,49 @@
-import React, { useState } from 'react'
-import { MenuItemDialog } from './MenuItemDialog'
-import { Item } from '@/sanity/types'
-import { CheckCircle2, CircleMinus } from 'lucide-react'
+import React, { useState } from "react";
+import { MenuItemDialog } from "./MenuItemDialog";
+import { Item } from "@/sanity/types";
 
 interface MenuDayProps {
-  date: string
-  description: string | null
-  menu: Array<Item & { category: { title: string | null } | null }>
+  date: string;
+  description: string | null;
+  menu: Array<Item & { category: { title: string | null } | null }>;
 }
 
 export function MenuDay({ date, description, menu }: MenuDayProps) {
   // Group items by category
-  const grouped: Record<string, Item[]> = {}
-  menu.forEach(item => {
-    const cat = item.category?.title || 'Inne'
-    if (!grouped[cat]) grouped[cat] = []
-    grouped[cat].push(item)
-  })
+  const grouped: Record<string, Item[]> = {};
+  menu.forEach((item) => {
+    const cat = item.category?.title || "Inne";
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(item);
+  });
   // Sort categories alphabetically
-  const categories = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'pl'))
+  const categories = Object.keys(grouped).sort((a, b) =>
+    a.localeCompare(b, "pl")
+  );
 
   // Dialog state
-  const [selected, setSelected] = useState<Item | null>(null)
-  const [open, setOpen] = useState(false)
+  const [selected, setSelected] = useState<Item | null>(null);
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 select-none">
       <div className="mb-4">
-        <h2 className="text-xl font-bold">{date}</h2>
+        <h2 className="text-xl font-bold">
+          Menu na:{" "}
+          {date
+            ? new Date(date).toLocaleDateString("pl-PL", {
+                day: "2-digit",
+                month: "2-digit",
+              })
+            : ""}
+        </h2>
         {description && (
-          <div className="text-muted-foreground text-sm">{description}</div>
+          <div className="text-muted-foreground text-sm">
+            Opis: {description}
+          </div>
         )}
       </div>
-      <div className="space-y-4">
+      <div className="space-y-4 ">
         {categories.map((cat) => (
           <div key={cat}>
             <h3 className="font-semibold text-base mb-2">{cat}</h3>
@@ -50,19 +61,11 @@ export function MenuDay({ date, description, menu }: MenuDayProps) {
                         setOpen(true);
                       }}
                     >
-                      <div className="flex items-start gap-3 p-2 rounded hover:bg-accent transition">
-                        {/* Availability dot */}
-                        {item.isAvailable ? (
-                          <span className="text-green-500">
-                            <CheckCircle2 size={16} />
-                          </span>
-                        ) : (
-                          <span className="text-red-400">
-                            <CircleMinus size={16} />
-                          </span>
-                        )}
+                      <div
+                        className={`flex items-start gap-3 p-2 border-l-3 rounded hover:bg-accent transition-colors ${item.isAvailable ? "border-l-emerald-500 bg-emerald-50/50 cursor-pointer" : "border-l-red-400 cursor-not-allowed bg-red-50/50"}`}
+                      >
                         {/* Title and subtitle */}
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pl-2">
                           <div className="font-medium truncate flex items-center">
                             {item.title}
                             <span

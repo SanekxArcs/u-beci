@@ -59,7 +59,9 @@ export function MenuItemDialogForm({
     } = item;
     const doc: Omit<MenuItemFormData, 'categoryId'> & { category?: { _type: 'reference'; _ref: string } } = {
       title,
-      slug: { current: slug || (title ? title.toLowerCase().replace(/\s+/g, '-') : '') },
+      slug: typeof slug === 'string' && slug.length > 0
+        ? { current: slug }
+        : { current: (title ? title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-ąćęłńóśźż]/gi, '').replace(/-+/g, '-') : '') },
       price,
       unit,
       description,
@@ -127,9 +129,48 @@ export function MenuItemDialogForm({
             <Label htmlFor="description" className="text-right">Opis</Label>
             <Textarea id="description" value={item.description} onChange={e => setItem({ ...item, description: e.target.value })} className="col-span-3" />
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="ingredients" className="text-right">Składniki</Label>
-            <Textarea id="ingredients" value={Array.isArray(item.ingredients) ? item.ingredients.join(', ') : ''} onChange={e => setItem({ ...item, ingredients: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) })} className="col-span-3" placeholder="Oddziel przecinkami..." />
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label htmlFor="ingredients" className="text-right mt-2">Składniki</Label>
+            <div className="col-span-3 flex flex-col gap-2">
+              {item.ingredients && item.ingredients.length > 0 ? (
+                item.ingredients.map((ing, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <Input
+                      value={ing}
+                      onChange={e => {
+                        const newIngredients = [...item.ingredients];
+                        newIngredients[idx] = e.target.value;
+                        setItem({ ...item, ingredients: newIngredients });
+                      }}
+                      placeholder={`Składnik #${idx + 1}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        const newIngredients = item.ingredients.filter((_, i) => i !== idx);
+                        setItem({ ...item, ingredients: newIngredients });
+                      }}
+                      aria-label="Usuń składnik"
+                    >
+                      &minus;
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <div className="text-muted-foreground text-xs">Brak składników</div>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-1 w-fit"
+                onClick={() => setItem({ ...item, ingredients: [...(item.ingredients || []), ''] })}
+              >
+                Dodaj składnik
+              </Button>
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="isSpecial" className="text-right">Dostępność</Label>

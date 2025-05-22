@@ -62,7 +62,7 @@ export function MenuDay({ date, description, menu }: MenuDayProps) {
                       }}
                     >
                       <div
-                        className={`flex items-start gap-3 p-2 border-l-3 rounded hover:bg-accent transition-colors ${item.isAvailable ? "border-l-emerald-500 bg-emerald-50/50 cursor-pointer" : "border-l-red-400 cursor-not-allowed bg-red-50/50"}`}
+                        className={`flex items-start gap-3 p-2 border-l-3 rounded hover:bg-accent transition-colors ${item.isAvailable ? "border-l-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/50 cursor-pointer" : "border-l-red-400 cursor-not-allowed bg-red-50/50 dark:bg-red-950/50"}`}
                       >
                         {/* Title and subtitle */}
                         <div className="flex-1 min-w-0 pl-2">

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {  Pencil, Trash2, Search } from 'lucide-react'
+import {  Pencil, Trash2, Search, RefreshCcw, ArrowDownAz, ArrowUpZA } from 'lucide-react'
 import { toast } from "sonner"
 import { Item } from '@/sanity/types'
 import { fetchAllMenuItems } from '@/lib/fetchMenuItems'
@@ -230,7 +230,15 @@ export function AdminMenuItems() {
       isAvailable: item.isAvailable ?? true,
       body: item.body ?? undefined,
       slug: item.slug?.current ?? '',
-      categoryId: typeof item.category === 'object' && item.category?._ref ? item.category._ref : '',
+      categoryId:
+        typeof item.category === 'object' && item.category
+          ? (('_id' in item.category && typeof item.category._id === 'string')
+              ? item.category._id
+              : ('_ref' in item.category && typeof item.category._ref === 'string'
+                  ? item.category._ref
+                  : '')
+            )
+          : '',
     })
   }
 
@@ -291,12 +299,12 @@ export function AdminMenuItems() {
         </div>
         <div className="flex gap-2 w-full md:w-auto">
           <Button variant="outline" onClick={() => setSortAsc((asc) => !asc)}>
-            Sortuj {sortAsc ? 'A-Z' : 'Z-A'}
+             {sortAsc ? <ArrowDownAz /> : <ArrowUpZA />}
           </Button>
           <Button variant="outline" onClick={handleRefresh}>
-            Odśwież
+            <RefreshCcw className="h-4 w-4" />
           </Button>
-          <Button onClick={() => setIsAddingItem(true)}>
+          <Button className='flex-1' onClick={() => setIsAddingItem(true)}>
             Dodaj nową pozycję
           </Button>
         </div>
@@ -306,7 +314,11 @@ export function AdminMenuItems() {
           item={newItem}
           setItem={setNewItem}
           categories={categories}
-          onSubmit={doc => { void handleAddItem(doc as MenuItemFormData & { categoryId?: string }); }}
+          onSubmit={(doc) => {
+            void handleAddItem(
+              doc as MenuItemFormData & { categoryId?: string }
+            );
+          }}
           isEdit={false}
         />
       </div>
@@ -319,13 +331,25 @@ export function AdminMenuItems() {
                 <div className="flex-grow">
                   <div className="flex justify-between">
                     <h3 className="font-bold">{item.title}</h3>
-                    <span className="font-medium">{item.price ? `${item.price.toFixed(2)} zł` : ''}</span>
+                    <span className="font-medium">
+                      {item.price ? `${item.price.toFixed(2)} zł` : ""}
+                    </span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{item.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    {item.description}
+                  </p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
-                      {typeof item.category === 'object' && 'title' in item.category ? String(item.category.title) : ''}
+                      {typeof item.category === "object" &&
+                      "title" in item.category
+                        ? String(item.category.title)
+                        : ""}
                     </span>
+                    {item.ingredients && item.ingredients.length > 0 && (
+                      <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
+                        Składniki: {item.ingredients.join(", ")}
+                      </span>
+                    )}
                     {item.isAvailable && (
                       <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
                         Dostępne dzisiaj
@@ -340,20 +364,24 @@ export function AdminMenuItems() {
                     item={editForm}
                     setItem={setEditForm}
                     categories={categories}
-                    onSubmit={doc => { void handleUpdateItem(doc as MenuItemFormData & { categoryId?: string }); }}
+                    onSubmit={(doc) => {
+                      void handleUpdateItem(
+                        doc as MenuItemFormData & { categoryId?: string }
+                      );
+                    }}
                     isEdit={true}
                   />
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     onClick={() => handleEditOpen(item)}
                   >
                     <Pencil className="h-4 w-4" />
                     <span className="sr-only">Edytuj</span>
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     onClick={() => handleDeleteItem(item._id)}
                     className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
@@ -366,10 +394,12 @@ export function AdminMenuItems() {
           ))
         ) : (
           <div className="text-center py-12 border rounded-lg">
-            <p className="text-muted-foreground">Nie znaleziono pozycji pasujących do wyszukiwania.</p>
+            <p className="text-muted-foreground">
+              Nie znaleziono pozycji pasujących do wyszukiwania.
+            </p>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

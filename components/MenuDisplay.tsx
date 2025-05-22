@@ -4,7 +4,7 @@ import { fetchDayMenusWithItems } from '@/lib/fetchDayMenus'
 import {  DAY_MENUS_WITH_ITEMS_QUERYResult, type Item } from '@/sanity/types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogTrigger, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { MoreHorizontal } from 'lucide-react'
 import { MenuDay } from './MenuDay'
 
@@ -77,7 +77,11 @@ export function MenuDisplay() {
   ].filter((tab): tab is { key: string; label: string } => Boolean(tab));
 
   // All other dates for dialog (not today, not custom)
-  const popoverTabs = allMenus.filter(m => m._id !== todayMenuObj?._id && m._id !== customTab);
+  const now = new Date();
+  const popoverTabs = allMenus
+    .filter(m => m._id !== todayMenuObj?._id && m._id !== customTab)
+    .filter(m => m.date && new Date(m.date).setHours(0,0,0,0) >= now.setHours(0,0,0,0))
+    .sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime());
 
   // On dialog select
   function handlePopoverSelect(tabId: string) {
@@ -92,19 +96,11 @@ export function MenuDisplay() {
     setSelectedTab(todayMenuObj?._id || '');
   }
 
-  // Set initial tab to today
-  useEffect(() => {
-    if (todayMenuObj && (!selectedTab || selectedTab !== todayMenuObj._id)) {
-      setSelectedTab(todayMenuObj._id);
-      setCustomTab(null);
-    }
-  }, [todayMenuObj, selectedTab]);
-
   console.log('selectedTab', selectedTab, 'visibleTabs', visibleTabs);
 
   return (
     <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-      <TabsList>
+      <TabsList className='w-full flex-nowrap '>
         {visibleTabs.map(tab => (
           <TabsTrigger
             key={tab.key}
@@ -120,6 +116,7 @@ export function MenuDisplay() {
           </DialogTrigger>
           <DialogContent>
             <DialogTitle>Wybierz datę</DialogTitle>
+            <DialogDescription>I zobacz wszystkie dostępne menu</DialogDescription>
             <div className="flex flex-col gap-2 mt-4">
               {popoverTabs.map(m => (
                 <Button

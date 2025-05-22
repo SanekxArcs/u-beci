@@ -43,7 +43,7 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
                 Menu
               </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild>
+            {/* <Button variant="outline" size="sm" asChild>
               <Link
                 href="/admin/dashboard"
                 className={`text-sm font-medium transition-colors hover:text-primary ${
@@ -54,15 +54,15 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
               >
                 Panel
               </Link>
-            </Button>
+            </Button> */}
             <div className="flex items-center gap-2">
-              {isAdmin && (
+              {/* {isAdmin && (
                 <>
                   <Button variant="outline" size="sm" asChild>
                     <Link href="/studio">Studio</Link>
                   </Button>
                 </>
-              )}
+              )} */}
               {!isAdmin && (
                 <>
                   <Button variant="outline" size="sm" asChild>
@@ -74,6 +74,7 @@ export function Header({ info }: { info?: INFO_QUERYResult }) {
                 <Button
                   variant="outline"
                   onClick={handleLogout}
+                  size="sm"
                   className="mt-4 md:mt-0"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
